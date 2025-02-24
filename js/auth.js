@@ -5,7 +5,7 @@
 
 const Auth = (() => {
     // GitHub OAuth configuration
-    const GITHUB_CLIENT_ID = ''; // You'll need to create a GitHub OAuth app and add your client ID here
+    const GITHUB_CLIENT_ID = 'Ov23liIXunXN3Fu1LHlf'; // You'll need to create a GitHub OAuth app and add your client ID here
     const GITHUB_REDIRECT_URI = window.location.origin + window.location.pathname;
     const GITHUB_SCOPE = 'gist';
     
