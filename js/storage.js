@@ -95,12 +95,16 @@ const Storage = (() => {
     
     /**
      * Sync data to GitHub Gist if authenticated
+     * This is called after any data changes to ensure cross-device sync
      */
     const syncToGitHub = () => {
         // Check if Auth module is available and user is authenticated
         if (typeof Auth !== 'undefined' && Auth.isUserAuthenticated()) {
             // Sync data to GitHub Gist
+            console.log('Syncing data changes to GitHub...');
             Auth.syncToGist();
+        } else {
+            console.log('Not syncing to GitHub: user not authenticated');
         }
     };
     
@@ -146,7 +150,6 @@ const Storage = (() => {
         deletePlay,
         loadPlayHistory,
         loadCartridgeStats,
-        clearAllData,
-        syncToGitHub
+        clearAllData
     };
 })();
