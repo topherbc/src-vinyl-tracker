@@ -21,9 +21,11 @@ A web application for tracking vinyl records played on a cartridge, developed by
 2. Open `index.html` in your browser
 3. Click the settings icon in the top-right corner to add your Discogs API credentials
 
-## Discogs API Credentials
+## Discogs Authentication
 
-To use the search functionality, you'll need to register for a Discogs API key:
+The application uses OAuth to authenticate with Discogs, providing a secure and user-friendly experience:
+
+### Setting Up Discogs OAuth
 
 1. Create an account at [Discogs](https://www.discogs.com/) if you don't have one
 2. Go to [Discogs Developer Settings](https://www.discogs.com/settings/developers)
@@ -32,18 +34,24 @@ To use the search functionality, you'll need to register for a Discogs API key:
    - Application name: SRC Vinyl Tracker
    - Description: A web application for tracking vinyl records played on a cartridge
    - Website URL: (Your GitHub Pages URL or leave blank)
-5. After creating the application, you'll receive a Consumer Key and Consumer Secret
-6. Enter these credentials in the SRC Vinyl Tracker settings
+   - Callback URL: (Same as your application URL)
+5. After creating the application, you'll receive a Consumer Key
+6. Add this key to the `config.js` file:
+   ```javascript
+   const DISCOGS_CONSUMER_KEY = 'your_consumer_key';
+   ```
 
-### Cross-Device Credential Storage
+### Authenticating in the App
 
-The application offers two ways to store your Discogs API credentials:
+1. Open the application in your browser
+2. Click the settings icon in the top-right corner
+3. Click "Log in with Discogs"
+4. You'll be redirected to Discogs to authorize the application
+5. After authorization, you'll be redirected back to the application
 
-1. **LocalStorage (Default)**: Credentials are stored in your browser's localStorage and will only be available on the current device.
+### Cross-Device Syncing
 
-2. **Config File**: By checking the "Store credentials in config.js" option in the settings modal, your credentials will be saved to the config.js file in the repository. This allows you to use the same credentials across all your devices.
-
-**Important Note**: If you enable the config file storage option, make sure to keep this repository private to protect your API credentials.
+When using GitHub authentication (see below), your Discogs authentication will be synced across all your devices automatically using GitHub Gists. This means you only need to log in once, and your authentication will be available on all your devices.
 
 ## GitHub Authentication
 

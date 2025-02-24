@@ -1,20 +1,16 @@
 /**
  * SRC Vinyl Tracker - Configuration
- * Contains application settings and API credentials
+ * Contains application settings and Discogs OAuth application credentials
  * 
- * IMPORTANT: Since this file contains API credentials, ensure this repository remains private.
- * If you plan to make this repository public, remove your credentials from this file first.
+ * IMPORTANT: This file contains application-level credentials, not user credentials.
+ * The CONSUMER_KEY identifies your application to Discogs, not the user.
  */
 
 const Config = (() => {
-    // Discogs API credentials
-    // Replace these with your actual Discogs API credentials
-    const DISCOGS_API_KEY = '';
-    const DISCOGS_API_SECRET = '';
-    const DISCOGS_USERNAME = '';
-    
-    // Configuration options
-    const USE_HARDCODED_CREDENTIALS = true; // Set to false to use localStorage instead
+    // Discogs OAuth application credentials
+    // Replace this with your actual Discogs application Consumer Key
+    // You can get this by registering an application at https://www.discogs.com/settings/developers
+    const DISCOGS_CONSUMER_KEY = 'XttJoAFmRapJSOhOWHid';
     
     // API request settings
     const MAX_RETRIES = 3;           // Maximum number of retry attempts for failed API requests
@@ -23,10 +19,7 @@ const Config = (() => {
     
     // Public API
     return {
-        DISCOGS_API_KEY,
-        DISCOGS_API_SECRET,
-        DISCOGS_USERNAME,
-        USE_HARDCODED_CREDENTIALS,
+        DISCOGS_CONSUMER_KEY,
         MAX_RETRIES,
         RETRY_DELAY,
         RATE_LIMIT_DELAY
