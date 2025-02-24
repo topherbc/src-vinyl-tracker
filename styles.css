@@ -344,6 +344,7 @@ body {
     border: none;
     max-width: 500px;
     width: 90%;
+    font-size: 16px;
 }
 
 #api-credentials-modal h4 {
@@ -353,6 +354,7 @@ body {
 
 #api-credentials-modal p {
     margin-bottom: 1.5rem;
+    line-height: 1.5;
 }
 
 #api-credentials-modal a {
@@ -364,14 +366,61 @@ body {
     text-decoration: underline;
 }
 
-#api-credentials-modal input {
+/* Settings section */
+.settings-section {
+    margin-bottom: 1.5rem;
+}
+
+.input-group {
+    margin-bottom: 1rem;
+}
+
+.input-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+.input-group input[type="text"] {
     width: 100%;
     padding: 0.75rem;
-    margin-bottom: 1rem;
     border: 1px solid var(--divider-color);
     border-radius: 4px;
     background-color: rgba(255, 255, 255, 0.05);
-    color: black;
+    color: var(--on-surface);
+    font-size: 16px;
+}
+
+.toggle-group {
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--divider-color);
+}
+
+.toggle-group label {
+    display: flex;
+    align-items: center;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.toggle-group input[type="checkbox"] {
+    margin-right: 0.5rem;
+    width: 18px;
+    height: 18px;
+}
+
+.help-text {
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--on-surface);
+    opacity: 0.7;
+    padding-left: 1.5rem;
+}
+
+.button-group {
+    display: flex;
+    justify-content: flex-end;
 }
 
 #api-credentials-modal button {
@@ -380,7 +429,8 @@ body {
     border-radius: 4px;
     cursor: pointer;
     font-weight: 500;
-    margin-right: 0.5rem;
+    margin-left: 0.5rem;
+    font-size: 16px;
 }
 
 #api-credentials-modal .save-credentials {
@@ -391,6 +441,36 @@ body {
 #api-credentials-modal .close-dialog {
     background-color: transparent;
     color: var(--on-surface);
+}
+
+/* Mobile optimizations for modal */
+@media (max-width: 600px) {
+    #api-credentials-modal {
+        width: 100%;
+        max-width: none;
+        border-radius: 0;
+        padding: 1rem;
+        margin: 0;
+        height: 100%;
+        max-height: none;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .settings-section {
+        flex: 1;
+        overflow-y: auto;
+    }
+    
+    .button-group {
+        padding-top: 1rem;
+        border-top: 1px solid var(--divider-color);
+    }
+    
+    #api-credentials-modal button {
+        flex: 1;
+        text-align: center;
+    }
 }
 
 /* Toast Notifications */
