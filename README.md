@@ -12,6 +12,8 @@ A web application for tracking vinyl records played on a cartridge, developed by
 - Cross-device credential storage option
 - Improved collection search with pagination
 - Data persistence using localStorage
+- GitHub authentication for cross-device synchronization
+- Secure storage of play history and settings in GitHub Gists
 
 ## Setup
 
@@ -43,6 +45,17 @@ The application offers two ways to store your Discogs API credentials:
 
 **Important Note**: If you enable the config file storage option, make sure to keep this repository private to protect your API credentials.
 
+## GitHub Authentication
+
+For a seamless cross-device experience, you can log in with your GitHub account:
+
+1. Click the "Login with GitHub" button in the header
+2. Authorize the application to access your GitHub account
+3. Your play history and settings will be securely stored in a private GitHub Gist
+4. Data will automatically sync between devices when you're logged in
+
+**Note**: To enable GitHub authentication, you need to create a GitHub OAuth application and add your client ID to the auth.js file.
+
 ## GitHub Pages Deployment
 
 To deploy this application to GitHub Pages:
@@ -53,7 +66,7 @@ To deploy this application to GitHub Pages:
 4. Scroll down to the GitHub Pages section
 5. Select the main branch as the source
 6. Click Save
-7. Your site will be published at `https://topherbc.github.io/src-vinyl-tracker/`
+7. Your site will be published at `https://yourusername.github.io/src-vinyl-tracker/`
 
 ## Usage
 
@@ -96,6 +109,7 @@ The application is fully responsive and optimized for mobile devices:
 - CSS3
 - JavaScript (ES6+)
 - Discogs API
+- GitHub API for authentication and Gist storage
 - localStorage for data persistence
 
 ## License
