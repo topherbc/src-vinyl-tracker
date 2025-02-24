@@ -87,7 +87,21 @@ const Storage = (() => {
         stats.totalPlays++;
         saveCartridgeStats(stats);
         
+        // Sync to GitHub Gist if authenticated
+        syncToGitHub();
+        
         return playHistory;
+    };
+    
+    /**
+     * Sync data to GitHub Gist if authenticated
+     */
+    const syncToGitHub = () => {
+        // Check if Auth module is available and user is authenticated
+        if (typeof Auth !== 'undefined' && Auth.isUserAuthenticated()) {
+            // Sync data to GitHub Gist
+            Auth.syncToGist();
+        }
     };
     
     /**
@@ -107,6 +121,9 @@ const Storage = (() => {
             const stats = loadCartridgeStats();
             stats.totalPlays = Math.max(0, stats.totalPlays - 1);
             saveCartridgeStats(stats);
+            
+            // Sync to GitHub Gist if authenticated
+            syncToGitHub();
         }
         
         return updatedHistory;
@@ -118,6 +135,9 @@ const Storage = (() => {
     const clearAllData = () => {
         localStorage.removeItem(PLAY_HISTORY_KEY);
         saveCartridgeStats(DEFAULT_STATS);
+        
+        // Sync to GitHub Gist if authenticated
+        syncToGitHub();
     };
     
     // Public API
@@ -126,6 +146,7 @@ const Storage = (() => {
         deletePlay,
         loadPlayHistory,
         loadCartridgeStats,
-        clearAllData
+        clearAllData,
+        syncToGitHub
     };
 })();
