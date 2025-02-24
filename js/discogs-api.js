@@ -301,7 +301,8 @@ const DiscogsAPI = (() => {
                 title: albumData.title,
                 artist: albumData.artist || 'Unknown Artist',
                 year: albumData.year || 'Unknown Year',
-                coverUrl: albumData.cover_image || albumData.thumb || ''
+                coverUrl: albumData.cover_image || albumData.thumb || '',
+                discogsUrl: `https://www.discogs.com/release/${albumData.id}`
             };
         }
         
@@ -315,7 +316,8 @@ const DiscogsAPI = (() => {
                 year: albumData.year || 'Unknown Year',
                 coverUrl: albumData.images && albumData.images.length > 0 
                     ? albumData.images[0].uri 
-                    : ''
+                    : '',
+                discogsUrl: `https://www.discogs.com/release/${albumData.id}`
             };
         }
         
@@ -325,7 +327,8 @@ const DiscogsAPI = (() => {
             title: albumData.title || 'Unknown Title',
             artist: albumData.artist || 'Unknown Artist',
             year: albumData.year || 'Unknown Year',
-            coverUrl: ''
+            coverUrl: '',
+            discogsUrl: albumData.id ? `https://www.discogs.com/release/${albumData.id}` : ''
         };
     };
     
