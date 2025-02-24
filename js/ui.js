@@ -119,6 +119,13 @@ const UI = (() => {
                 return;
             }
             
+            // Check if username is set for collection search
+            if (DiscogsAPI.hasUsername()) {
+                searchResultsEl.innerHTML = '<div class="searching">Searching your collection...</div>';
+            } else {
+                searchResultsEl.innerHTML = '<div class="searching">Searching Discogs database...</div>';
+            }
+            
             const results = await DiscogsAPI.searchAlbums(query);
             
             if (results.length === 0) {
