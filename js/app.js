@@ -43,7 +43,7 @@ const App = (() => {
     };
     
     /**
-     * Prompt user for Discogs API credentials
+     * Prompt user for Discogs authentication
      */
     const promptForApiCredentials = () => {
         // Create modal for API credentials if it doesn't exist
@@ -53,71 +53,52 @@ const App = (() => {
             modal = document.createElement('dialog');
             modal.id = 'api-credentials-modal';
             
-            // Get current values
-            const useHardcoded = typeof Config !== 'undefined' ? Config.USE_HARDCODED_CREDENTIALS : false;
-            const apiKey = localStorage.getItem('srcVinylTracker_apiKey') || '';
-            const apiSecret = localStorage.getItem('srcVinylTracker_apiSecret') || '';
-            const username = localStorage.getItem('srcVinylTracker_username') || '';
+            // Check if OAuth is available
+            const oauthAvailable = typeof DiscogsOAuth !== 'undefined';
+            const oauthAuthenticated = oauthAvailable && DiscogsOAuth.isAuthenticated();
+            const username = oauthAuthenticated ? DiscogsOAuth.getUsername() : '';
             
             modal.innerHTML = `
-                <h4>Discogs API Credentials</h4>
+                <h4>Discogs Authentication</h4>
                 <p>
-                    To use the Discogs API, you need to provide your API key and secret.
-                    You can get these by registering an application at 
-                    <a href="https://www.discogs.com/settings/developers" target="_blank">Discogs Developer Settings</a>.
+                    Connect to Discogs to search for albums and track your vinyl collection.
                 </p>
-                <div class="settings-section">
-                    <div class="input-group">
-                        <label for="api-key-input">API Key:</label>
-                        <input type="text" id="api-key-input" placeholder="API Key" value="${apiKey}">
-                    </div>
-                    
-                    <div class="input-group">
-                        <label for="api-secret-input">API Secret:</label>
-                        <input type="text" id="api-secret-input" placeholder="API Secret" value="${apiSecret}">
-                    </div>
-                    
-                    <div class="input-group">
-                        <label for="username-input">Discogs Username:</label>
-                        <input type="text" id="username-input" placeholder="Discogs Username" value="${username}">
-                    </div>
-                    
-                    <div class="toggle-group">
-                        <label for="use-hardcoded">
-                            <input type="checkbox" id="use-hardcoded" ${useHardcoded ? 'checked' : ''}>
-                            Store credentials in config.js (for cross-device use)
-                        </label>
-                        <p class="help-text">
-                            When checked, credentials will be saved to config.js file in the repository.
-                            This allows the same credentials to be used across all your devices.
-                            <strong>Note:</strong> Keep the repository private if you enable this option.
-                        </p>
+                
+                <div class="auth-options">
+                    <div class="auth-option">
+                        <h5>OAuth Authentication</h5>
+                        <p>Log in directly with your Discogs account for a seamless experience.</p>
+                        <button id="discogs-oauth-button" class="primary-button ${oauthAuthenticated ? 'success' : ''}">
+                            ${oauthAuthenticated ? 'Connected with Discogs' : 'Log in with Discogs'}
+                        </button>
+                        ${oauthAuthenticated ? `<p class="success-text">✓ Successfully authenticated as ${username || 'Discogs User'}</p>` : ''}
                     </div>
                 </div>
+                
                 <div class="button-group">
-                    <button type="button" class="save-credentials primary-button">Save</button>
-                    <button type="button" class="close-dialog">Cancel</button>
+                    <button type="button" class="close-dialog">Close</button>
                 </div>
             `;
             
             document.body.appendChild(modal);
             
             // Add event listeners
-            modal.querySelector('.save-credentials').addEventListener('click', saveApiCredentials);
             modal.querySelector('.close-dialog').addEventListener('click', () => {
                 modal.close();
             });
-        } else {
-            // Update existing values
-            const apiKey = localStorage.getItem('srcVinylTracker_apiKey') || '';
-            const apiSecret = localStorage.getItem('srcVinylTracker_apiSecret') || '';
-            const username = localStorage.getItem('srcVinylTracker_username') || '';
-            const useHardcoded = typeof Config !== 'undefined' ? Config.USE_HARDCODED_CREDENTIALS : false;
             
-            modal.querySelector('#api-key-input').value = apiKey;
-            modal.querySelector('#api-secret-input').value = apiSecret;
-            modal.querySelector('#username-input').value = username;
-            modal.querySelector('#use-hardcoded').checked = useHardcoded;
+            // Add OAuth button event listener if available
+            const oauthButton = modal.querySelector('#discogs-oauth-button');
+            if (oauthButton && typeof DiscogsOAuth !== 'undefined') {
+                oauthButton.addEventListener('click', () => {
+                    DiscogsOAuth.login();
+                });
+            }
+        } else {
+            // Update OAuth button if needed
+            if (typeof DiscogsOAuth !== 'undefined') {
+                DiscogsOAuth.updateAuthUI();
+            }
         }
         
         // Show the modal
