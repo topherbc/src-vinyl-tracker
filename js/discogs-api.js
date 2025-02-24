@@ -8,8 +8,7 @@ const DiscogsAPI = (() => {
     const API_BASE_URL = 'https://api.discogs.com';
     const USER_AGENT = 'SRCVinylTracker/1.0';
     
-    // This would normally be stored securely, but for this demo we'll include it directly
-    // In a real app, you would use environment variables or a secure backend
+    // API credentials
     let API_KEY = '';
     let API_SECRET = '';
     let USERNAME = '';
@@ -24,6 +23,28 @@ const DiscogsAPI = (() => {
         API_KEY = key;
         API_SECRET = secret;
         USERNAME = username;
+    };
+    
+    /**
+     * Initialize credentials from config or localStorage
+     */
+    const initCredentials = () => {
+        if (typeof Config !== 'undefined' && Config.USE_HARDCODED_CREDENTIALS) {
+            // Use hardcoded credentials from config.js
+            setCredentials(
+                Config.DISCOGS_API_KEY,
+                Config.DISCOGS_API_SECRET,
+                Config.DISCOGS_USERNAME
+            );
+            console.log('Using hardcoded credentials from config.js');
+        } else {
+            // Use credentials from localStorage
+            const apiKey = localStorage.getItem('srcVinylTracker_apiKey') || '';
+            const apiSecret = localStorage.getItem('srcVinylTracker_apiSecret') || '';
+            const username = localStorage.getItem('srcVinylTracker_username') || '';
+            setCredentials(apiKey, apiSecret, username);
+            console.log('Using credentials from localStorage');
+        }
     };
     
     /**
@@ -59,6 +80,60 @@ const DiscogsAPI = (() => {
     };
     
     /**
+     * Sleep for a specified duration
+     * @param {Number} ms - Milliseconds to sleep
+     * @returns {Promise} - Promise that resolves after the specified time
+     */
+    const sleep = (ms) => {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    };
+    
+    /**
+     * Make a fetch request with retry logic
+     * @param {String} url - URL to fetch
+     * @param {Object} options - Fetch options
+     * @returns {Promise} - Promise resolving to response data
+     */
+    const fetchWithRetry = async (url, options = {}) => {
+        const maxRetries = typeof Config !== 'undefined' ? Config.MAX_RETRIES : 3;
+        const retryDelay = typeof Config !== 'undefined' ? Config.RETRY_DELAY : 1000;
+        const rateLimitDelay = typeof Config !== 'undefined' ? Config.RATE_LIMIT_DELAY : 2000;
+        
+        let retries = 0;
+        
+        while (true) {
+            try {
+                const response = await fetch(url, options);
+                
+                // Handle rate limiting
+                if (response.status === 429) {
+                    console.warn(`Rate limit hit, waiting ${rateLimitDelay}ms before retrying...`);
+                    await sleep(rateLimitDelay);
+                    continue;
+                }
+                
+                // Handle other errors
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Discogs API error: ${response.status} - ${errorText}`);
+                }
+                
+                return await response.json();
+            } catch (error) {
+                retries++;
+                console.error(`API request failed (attempt ${retries}/${maxRetries}):`, error);
+                
+                if (retries >= maxRetries) {
+                    throw new Error(`Failed after ${maxRetries} attempts: ${error.message}`);
+                }
+                
+                // Wait before retrying
+                await sleep(retryDelay);
+            }
+        }
+    };
+    
+    /**
      * Search for albums on Discogs
      * @param {String} query - Search query
      * @returns {Promise} - Promise resolving to search results
@@ -76,16 +151,11 @@ const DiscogsAPI = (() => {
             url.searchParams.append('type', 'release');
             url.searchParams.append('format', 'album');
             
-            const response = await fetch(url, {
+            const data = await fetchWithRetry(url.toString(), {
                 method: 'GET',
                 headers: getHeaders()
             });
             
-            if (!response.ok) {
-                throw new Error(`Discogs API error: ${response.status}`);
-            }
-            
-            const data = await response.json();
             return data.results || [];
         } catch (error) {
             console.error('Error searching Discogs:', error);
@@ -102,16 +172,10 @@ const DiscogsAPI = (() => {
         try {
             const url = `${API_BASE_URL}/releases/${id}`;
             
-            const response = await fetch(url, {
+            return await fetchWithRetry(url, {
                 method: 'GET',
                 headers: getHeaders()
             });
-            
-            if (!response.ok) {
-                throw new Error(`Discogs API error: ${response.status}`);
-            }
-            
-            return await response.json();
         } catch (error) {
             console.error('Error fetching album details:', error);
             throw error;
@@ -138,16 +202,11 @@ const DiscogsAPI = (() => {
                 url.searchParams.append('page', page);
                 url.searchParams.append('per_page', 100); // Maximum allowed by Discogs API
                 
-                const response = await fetch(url, {
+                const data = await fetchWithRetry(url.toString(), {
                     method: 'GET',
                     headers: getHeaders()
                 });
                 
-                if (!response.ok) {
-                    throw new Error(`Discogs API error: ${response.status}`);
-                }
-                
-                const data = await response.json();
                 const releases = data.releases || [];
                 
                 if (releases.length === 0) {
@@ -159,6 +218,8 @@ const DiscogsAPI = (() => {
                     const pagination = data.pagination;
                     if (pagination && pagination.page < pagination.pages) {
                         page++;
+                        // Add a small delay between pagination requests to avoid rate limiting
+                        await sleep(300);
                     } else {
                         hasMorePages = false;
                     }
@@ -268,9 +329,13 @@ const DiscogsAPI = (() => {
         };
     };
     
+    // Initialize credentials on load
+    initCredentials();
+    
     // Public API
     return {
         setCredentials,
+        initCredentials,
         hasCredentials,
         hasUsername,
         searchAlbums,
