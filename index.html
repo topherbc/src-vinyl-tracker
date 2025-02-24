@@ -4,90 +4,68 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SRC Vinyl Tracker</title>
-    <!-- Material Design Lite -->
+    <!-- Google Fonts -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
-    <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
-    <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
     <!-- Custom CSS -->
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
-        <header class="mdl-layout__header">
-            <div class="mdl-layout__header-row">
-                <span class="mdl-layout-title">SRC Vinyl Tracker</span>
-                <div class="mdl-layout-spacer"></div>
+    <div class="app-container">
+        <header class="app-header">
+            <div class="header-content">
+                <h1 class="app-title">Vinyl Tracker</h1>
                 <div class="play-counter">
                     <span id="play-count">0</span> Plays
                 </div>
+                <button id="settings-button" class="icon-button">
+                    <span class="material-icons">settings</span>
+                </button>
             </div>
         </header>
-        <main class="mdl-layout__content">
-            <div class="page-content">
-                <div class="mdl-grid">
-                    <!-- Play History Column -->
-                    <div class="mdl-cell mdl-cell--6-col play-history-container">
-                        <div class="mdl-card mdl-shadow--2dp full-width">
-                            <div class="mdl-card__title">
-                                <h2 class="mdl-card__title-text">Play History</h2>
-                            </div>
-                            <div class="mdl-card__supporting-text">
-                                <ul id="play-history" class="play-list">
-                                    <!-- Play history items will be added here dynamically -->
-                                </ul>
-                            </div>
+
+        <main class="app-content">
+            <!-- Search Section -->
+            <section class="search-section">
+                <div class="search-container">
+                    <input type="text" id="search-input" class="search-input" placeholder="Search your collection...">
+                    <button class="search-button">
+                        <span class="material-icons">search</span>
+                    </button>
+                </div>
+                <div id="search-results" class="search-results">
+                    <!-- Search results will be displayed here -->
+                </div>
+            </section>
+
+            <!-- Selected Album Section -->
+            <section id="selected-album" class="selected-album hidden">
+                <div class="album-details">
+                    <img id="album-cover" src="" alt="Album Cover">
+                    <div class="album-info">
+                        <h3 id="album-title"></h3>
+                        <p id="album-artist"></p>
+                        <div class="date-input-container">
+                            <label for="date-listened">Date Listened:</label>
+                            <input type="date" id="date-listened" value="">
                         </div>
-                    </div>
-                    
-                    <!-- Add New Play Column -->
-                    <div class="mdl-cell mdl-cell--6-col add-play-container">
-                        <div class="mdl-card mdl-shadow--2dp full-width">
-                            <div class="mdl-card__title">
-                                <h2 class="mdl-card__title-text">Add New Play</h2>
-                            </div>
-                            <div class="mdl-card__supporting-text">
-                                <form id="add-play-form">
-                                    <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label full-width">
-                                        <input class="mdl-textfield__input" type="text" id="search-input">
-                                        <label class="mdl-textfield__label" for="search-input">Search Discogs</label>
-                                    </div>
-                                    
-                                    <div id="search-results" class="search-results">
-                                        <!-- Search results will be displayed here -->
-                                    </div>
-                                    
-                                    <div id="selected-album" class="selected-album hidden">
-                                        <div class="album-details">
-                                            <img id="album-cover" src="" alt="Album Cover">
-                                            <div class="album-info">
-                                                <h4 id="album-title"></h4>
-                                                <p id="album-artist"></p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label full-width">
-                                        <input class="mdl-textfield__input" type="date" id="date-listened" value="">
-                                        <label class="mdl-textfield__label" for="date-listened">Date Listened</label>
-                                    </div>
-                                    
-                                    <button type="submit" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-js-ripple-effect full-width">
-                                        Add Play
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
+                        <button id="add-play-button" class="primary-button">Add Play</button>
                     </div>
                 </div>
-            </div>
-        </main>
-        <footer class="mdl-mini-footer">
-            <div class="mdl-mini-footer__left-section">
-                <div class="mdl-logo">Sunlight Research Company</div>
-                <ul class="mdl-mini-footer__link-list">
-                    <li><a href="https://github.com/topherbc/src-vinyl-tracker" target="_blank">GitHub</a></li>
+            </section>
+
+            <!-- Play History Section -->
+            <section class="play-history-section">
+                <h2 class="section-title">Play History</h2>
+                <ul id="play-history" class="play-list">
+                    <!-- Play history items will be added here dynamically -->
                 </ul>
-            </div>
+            </section>
+        </main>
+
+        <footer class="app-footer">
+            <p>Sunlight Research Company</p>
+            <a href="https://github.com/topherbc/src-vinyl-tracker" target="_blank">GitHub</a>
         </footer>
     </div>
 
