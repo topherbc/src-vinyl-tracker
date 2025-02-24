@@ -119,7 +119,61 @@ const DiscogsAPI = (() => {
     };
     
     /**
-     * Search within a user's collection
+     * Get a user's collection from Discogs with pagination support
+     * @returns {Promise} - Promise resolving to user's collection
+     */
+    const getUserCollection = async () => {
+        if (!USERNAME) {
+            throw new Error('Discogs username not set');
+        }
+        
+        try {
+            let allReleases = [];
+            let page = 1;
+            let hasMorePages = true;
+            
+            // Fetch all pages of the collection
+            while (hasMorePages) {
+                const url = new URL(`${API_BASE_URL}/users/${USERNAME}/collection/folders/0/releases`);
+                url.searchParams.append('page', page);
+                url.searchParams.append('per_page', 100); // Maximum allowed by Discogs API
+                
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: getHeaders()
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Discogs API error: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                const releases = data.releases || [];
+                
+                if (releases.length === 0) {
+                    hasMorePages = false;
+                } else {
+                    allReleases = [...allReleases, ...releases];
+                    
+                    // Check if there are more pages
+                    const pagination = data.pagination;
+                    if (pagination && pagination.page < pagination.pages) {
+                        page++;
+                    } else {
+                        hasMorePages = false;
+                    }
+                }
+            }
+            
+            return allReleases;
+        } catch (error) {
+            console.error('Error fetching user collection:', error);
+            throw error;
+        }
+    };
+    
+    /**
+     * Search within a user's collection with improved matching
      * @param {String} query - Search query
      * @returns {Promise} - Promise resolving to filtered collection results
      */
@@ -127,50 +181,48 @@ const DiscogsAPI = (() => {
         try {
             const collection = await getUserCollection();
             
-            // Filter collection based on query
-            const lowerQuery = query.toLowerCase();
-            return collection.filter(item => {
-                const title = item.basic_information?.title?.toLowerCase() || '';
-                const artist = item.basic_information?.artists?.[0]?.name?.toLowerCase() || '';
-                return title.includes(lowerQuery) || artist.includes(lowerQuery);
-            }).map(item => ({
-                id: item.id,
-                title: item.basic_information?.title || 'Unknown Title',
-                artist: item.basic_information?.artists?.[0]?.name || 'Unknown Artist',
-                year: item.basic_information?.year || 'Unknown Year',
-                cover_image: item.basic_information?.cover_image || '',
-                thumb: item.basic_information?.thumb || ''
-            }));
+            // Split query into words for more flexible matching
+            const queryWords = query.toLowerCase().split(/\s+/).filter(word => word.length > 1);
+            
+            // Score-based matching system
+            return collection
+                .map(item => {
+                    const title = item.basic_information?.title?.toLowerCase() || '';
+                    const artist = item.basic_information?.artists?.map(a => a.name.toLowerCase()).join(' ') || '';
+                    const fullText = `${title} ${artist}`;
+                    
+                    // Calculate match score
+                    let score = 0;
+                    
+                    // Exact match gets highest score
+                    if (title.includes(query.toLowerCase()) || artist.includes(query.toLowerCase())) {
+                        score += 100;
+                    }
+                    
+                    // Word-by-word matching
+                    queryWords.forEach(word => {
+                        if (fullText.includes(word)) {
+                            score += 10;
+                        }
+                    });
+                    
+                    return {
+                        item,
+                        score
+                    };
+                })
+                .filter(result => result.score > 0) // Only include items with a positive score
+                .sort((a, b) => b.score - a.score) // Sort by score (highest first)
+                .map(result => ({
+                    id: result.item.id,
+                    title: result.item.basic_information?.title || 'Unknown Title',
+                    artist: result.item.basic_information?.artists?.[0]?.name || 'Unknown Artist',
+                    year: result.item.basic_information?.year || 'Unknown Year',
+                    cover_image: result.item.basic_information?.cover_image || '',
+                    thumb: result.item.basic_information?.thumb || ''
+                }));
         } catch (error) {
             console.error('Error searching user collection:', error);
-            throw error;
-        }
-    };
-    
-    /**
-     * Get a user's collection from Discogs
-     * @returns {Promise} - Promise resolving to user's collection
-     */
-    const getUserCollection = async () => {
-        if (!USERNAME) {
-            throw new Error('Discogs username not set');
-        }
-        try {
-            const url = `${API_BASE_URL}/users/${USERNAME}/collection/folders/0/releases`;
-            
-            const response = await fetch(url, {
-                method: 'GET',
-                headers: getHeaders()
-            });
-            
-            if (!response.ok) {
-                throw new Error(`Discogs API error: ${response.status}`);
-            }
-            
-            const data = await response.json();
-            return data.releases || [];
-        } catch (error) {
-            console.error('Error fetching user collection:', error);
             throw error;
         }
     };
