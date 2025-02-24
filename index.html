@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SRC Vinyl Tracker</title>
+    <!-- Google Fonts -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <header class="app-header">
+            <div class="header-content">
+                <h1 class="app-title">Vinyl Tracker</h1>
+                <div class="play-counter">
+                    <span id="play-count">0</span> Plays
+                </div>
+                <div class="header-actions">
+                    <div id="github-login-button" class="login-button">
+                        <span class="material-icons">cloud_sync</span>
+                        <span>Login with GitHub</span>
+                    </div>
+                    <div id="github-user-info" class="user-info hidden">
+                        <!-- User info will be populated by auth.js -->
+                    </div>
+                    <button id="settings-button" class="icon-button">
+                        <span class="material-icons">settings</span>
+                    </button>
+                </div>
+            </div>
+            <div id="sync-status" class="sync-status hidden">
+                <!-- Sync status will be populated by auth.js -->
+            </div>
+        </header>
+
+        <main class="app-content">
+            <!-- Search Section -->
+            <section class="search-section">
+                <div class="search-container">
+                    <input type="text" id="search-input" class="search-input" placeholder="Search your collection...">
+                    <button class="search-button">
+                        <span class="material-icons">search</span>
+                    </button>
+                </div>
+                <div id="search-results" class="search-results">
+                    <!-- Search results will be displayed here -->
+                </div>
+            </section>
+
+            <!-- Selected Album Section -->
+            <section id="selected-album" class="selected-album hidden">
+                <div class="album-details">
+                    <img id="album-cover" src="" alt="Album Cover">
+                    <div class="album-info">
+                        <h3 id="album-title"></h3>
+                        <p id="album-artist"></p>
+                        <div class="date-input-container">
+                            <label for="date-listened">Date Listened:</label>
+                            <input type="date" id="date-listened" value="">
+                        </div>
+                        <button id="add-play-button" class="primary-button">Add Play</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Play History Section -->
+            <section class="play-history-section">
+                <h2 class="section-title">Play History</h2>
+                <ul id="play-history" class="play-list">
+                    <!-- Play history items will be added here dynamically -->
+                </ul>
+            </section>
+        </main>
+
+        <footer class="app-footer">
+            <p>Sunlight Research Company</p>
+            <a href="https://github.com/topherbc/src-vinyl-tracker" target="_blank">GitHub</a>
+        </footer>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/config.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/discogs-oauth.js"></script>
+    <script src="js/discogs-api.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
