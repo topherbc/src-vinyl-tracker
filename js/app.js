@@ -174,6 +174,11 @@ const App = (() => {
             // Update API credentials
             DiscogsAPI.setCredentials(apiKey, apiSecret, username);
             
+            // Sync to GitHub Gist if authenticated
+            if (typeof Auth !== 'undefined' && Auth.isUserAuthenticated()) {
+                Auth.syncToGist();
+            }
+            
             // Close the modal
             const modal = document.getElementById('api-credentials-modal');
             modal.close();
