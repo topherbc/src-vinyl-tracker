@@ -12,15 +12,18 @@ const DiscogsAPI = (() => {
     // In a real app, you would use environment variables or a secure backend
     let API_KEY = '';
     let API_SECRET = '';
+    let USERNAME = '';
     
     /**
      * Set the API credentials
      * @param {String} key - Discogs API key
      * @param {String} secret - Discogs API secret
+     * @param {String} username - Discogs username
      */
-    const setCredentials = (key, secret) => {
+    const setCredentials = (key, secret, username) => {
         API_KEY = key;
         API_SECRET = secret;
+        USERNAME = username;
     };
     
     /**
@@ -29,6 +32,14 @@ const DiscogsAPI = (() => {
      */
     const hasCredentials = () => {
         return !!(API_KEY && API_SECRET);
+    };
+    
+    /**
+     * Check if username is set
+     * @returns {Boolean} - True if username is set
+     */
+    const hasUsername = () => {
+        return !!USERNAME;
     };
     
     /**
@@ -54,6 +65,12 @@ const DiscogsAPI = (() => {
      */
     const searchAlbums = async (query) => {
         try {
+            // If username is set, search in user's collection
+            if (USERNAME) {
+                return await searchUserCollection(query);
+            }
+            
+            // Otherwise, fall back to general search
             const url = new URL(`${API_BASE_URL}/database/search`);
             url.searchParams.append('q', query);
             url.searchParams.append('type', 'release');
@@ -102,13 +119,44 @@ const DiscogsAPI = (() => {
     };
     
     /**
+     * Search within a user's collection
+     * @param {String} query - Search query
+     * @returns {Promise} - Promise resolving to filtered collection results
+     */
+    const searchUserCollection = async (query) => {
+        try {
+            const collection = await getUserCollection();
+            
+            // Filter collection based on query
+            const lowerQuery = query.toLowerCase();
+            return collection.filter(item => {
+                const title = item.basic_information?.title?.toLowerCase() || '';
+                const artist = item.basic_information?.artists?.[0]?.name?.toLowerCase() || '';
+                return title.includes(lowerQuery) || artist.includes(lowerQuery);
+            }).map(item => ({
+                id: item.id,
+                title: item.basic_information?.title || 'Unknown Title',
+                artist: item.basic_information?.artists?.[0]?.name || 'Unknown Artist',
+                year: item.basic_information?.year || 'Unknown Year',
+                cover_image: item.basic_information?.cover_image || '',
+                thumb: item.basic_information?.thumb || ''
+            }));
+        } catch (error) {
+            console.error('Error searching user collection:', error);
+            throw error;
+        }
+    };
+    
+    /**
      * Get a user's collection from Discogs
-     * @param {String} username - Discogs username
      * @returns {Promise} - Promise resolving to user's collection
      */
-    const getUserCollection = async (username) => {
+    const getUserCollection = async () => {
+        if (!USERNAME) {
+            throw new Error('Discogs username not set');
+        }
         try {
-            const url = `${API_BASE_URL}/users/${username}/collection/folders/0/releases`;
+            const url = `${API_BASE_URL}/users/${USERNAME}/collection/folders/0/releases`;
             
             const response = await fetch(url, {
                 method: 'GET',
@@ -172,6 +220,7 @@ const DiscogsAPI = (() => {
     return {
         setCredentials,
         hasCredentials,
+        hasUsername,
         searchAlbums,
         getAlbumDetails,
         getUserCollection,
