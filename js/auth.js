@@ -244,6 +244,7 @@ const Auth = (() => {
      */
     const syncFromGist = async () => {
         if (!isAuthenticated || !gistId) {
+            console.log('Not syncing: User not authenticated or no gist ID');
             return;
         }
         
@@ -254,7 +255,9 @@ const Auth = (() => {
             // Update sync status
             const syncStatus = document.getElementById('sync-status');
             if (syncStatus) {
-                syncStatus.innerHTML = 'Last synced: ' + new Date().toLocaleTimeString();
+                const syncTime = new Date().toLocaleTimeString();
+                syncStatus.innerHTML = 'Last synced: ' + syncTime;
+                console.log('Updated sync status to:', syncTime);
             }
             
             // Simulate fetching data
@@ -263,13 +266,25 @@ const Auth = (() => {
             // Get the stored gist data from localStorage
             const gistDataJson = localStorage.getItem(`srcVinylTracker_gistData_${gistId}`);
             if (gistDataJson) {
-                const gistData = JSON.parse(gistDataJson);
+                console.log('Found gist data, parsing...');
+                let gistData;
+                
+                try {
+                    gistData = JSON.parse(gistDataJson);
+                    console.log('Successfully parsed gist data');
+                } catch (parseError) {
+                    console.error('Error parsing gist data:', parseError);
+                    UI.showToast('Error parsing sync data');
+                    return;
+                }
                 
                 // Update credentials if they exist in the gist data
                 if (gistData.credentials) {
                     const { apiKey, apiSecret, username } = gistData.credentials;
                     
                     if (apiKey && apiSecret) {
+                        console.log('Found credentials in gist data, updating...');
+                        
                         // Save to localStorage
                         localStorage.setItem('srcVinylTracker_apiKey', apiKey);
                         localStorage.setItem('srcVinylTracker_apiSecret', apiSecret);
@@ -278,54 +293,107 @@ const Auth = (() => {
                         }
                         
                         // Update DiscogsAPI credentials
-                        DiscogsAPI.setCredentials(apiKey, apiSecret, username);
+                        if (typeof DiscogsAPI !== 'undefined' && typeof DiscogsAPI.setCredentials === 'function') {
+                            DiscogsAPI.setCredentials(apiKey, apiSecret, username);
+                            console.log('Credentials updated in DiscogsAPI');
+                        } else {
+                            console.warn('DiscogsAPI not available, credentials not updated');
+                        }
                         
-                        console.log('Credentials loaded from Gist:', { apiKey, apiSecret, username });
+                        console.log('Credentials loaded from Gist');
                     }
                 }
                 
                 // Update play history if it exists in the gist data
                 if (gistData.playHistory && Array.isArray(gistData.playHistory)) {
+                    console.log(`Found ${gistData.playHistory.length} plays in gist data`);
+                    
                     // Merge with local play history
                     const localPlayHistory = Storage.loadPlayHistory();
+                    console.log(`Found ${localPlayHistory.length} plays in local storage`);
                     
                     // Create a map of existing play IDs for quick lookup
                     const existingPlayIds = new Set(localPlayHistory.map(play => play.id));
+                    console.log(`Created set of ${existingPlayIds.size} existing play IDs`);
                     
                     // Add plays from gist that don't exist locally
                     const newPlays = gistData.playHistory.filter(play => !existingPlayIds.has(play.id));
+                    console.log(`Found ${newPlays.length} new plays to add from gist`);
                     
                     if (newPlays.length > 0) {
+                        console.log('Merging play histories...');
                         const mergedPlayHistory = [...newPlays, ...localPlayHistory];
                         
                         // Sort by date (newest first)
                         mergedPlayHistory.sort((a, b) => {
-                            const dateA = new Date(a.dateListened);
-                            const dateB = new Date(b.dateListened);
-                            return dateB - dateA;
+                            // Handle missing or invalid dates
+                            if (!a.dateListened) return 1;
+                            if (!b.dateListened) return -1;
+                            
+                            try {
+                                const dateA = new Date(a.dateListened);
+                                const dateB = new Date(b.dateListened);
+                                
+                                // Check if dates are valid
+                                if (isNaN(dateA.getTime())) return 1;
+                                if (isNaN(dateB.getTime())) return -1;
+                                
+                                return dateB - dateA;
+                            } catch (error) {
+                                console.error('Error comparing dates:', error);
+                                return 0;
+                            }
                         });
+                        
+                        console.log(`Saving merged play history with ${mergedPlayHistory.length} plays`);
                         
                         // Save merged play history
                         localStorage.setItem(PLAY_HISTORY_KEY, JSON.stringify(mergedPlayHistory));
                         
                         // Update UI
-                        UI.renderPlayHistory();
+                        if (typeof UI !== 'undefined' && typeof UI.renderPlayHistory === 'function') {
+                            UI.renderPlayHistory();
+                            console.log('UI updated with merged play history');
+                        } else {
+                            console.warn('UI not available, play history UI not updated');
+                        }
+                    } else {
+                        console.log('No new plays to add from gist');
                     }
+                } else {
+                    console.log('No play history found in gist data or invalid format');
                 }
                 
                 // Update stats if they exist in the gist data
                 if (gistData.stats) {
+                    console.log('Found stats in gist data');
+                    
                     // Use the higher play count between local and gist
                     const localStats = Storage.loadCartridgeStats();
                     const gistStats = gistData.stats;
                     
+                    console.log('Local play count:', localStats.totalPlays);
+                    console.log('Gist play count:', gistStats.totalPlays);
+                    
                     if (gistStats.totalPlays > localStats.totalPlays) {
+                        console.log('Gist play count is higher, updating local stats');
                         localStorage.setItem(CARTRIDGE_STATS_KEY, JSON.stringify(gistStats));
-                        UI.updatePlayCount();
+                        
+                        if (typeof UI !== 'undefined' && typeof UI.updatePlayCount === 'function') {
+                            UI.updatePlayCount();
+                            console.log('UI updated with new play count');
+                        } else {
+                            console.warn('UI not available, play count UI not updated');
+                        }
+                    } else {
+                        console.log('Local play count is higher or equal, keeping local stats');
                     }
                 }
                 
-                UI.showToast('Data synced from GitHub');
+                if (typeof UI !== 'undefined' && typeof UI.showToast === 'function') {
+                    UI.showToast('Data synced from GitHub');
+                }
+                console.log('Sync from gist completed successfully');
             } else {
                 console.log('No gist data found, creating initial gist...');
                 // If no gist data exists yet, create it with current data
@@ -333,7 +401,9 @@ const Auth = (() => {
             }
         } catch (error) {
             console.error('Error syncing from Gist:', error);
-            UI.showToast('Error syncing data: ' + error.message);
+            if (typeof UI !== 'undefined' && typeof UI.showToast === 'function') {
+                UI.showToast('Error syncing data: ' + error.message);
+            }
         }
     };
     
@@ -342,23 +412,83 @@ const Auth = (() => {
      */
     const syncToGist = async () => {
         if (!isAuthenticated || !gistId) {
+            console.log('Not syncing to gist: User not authenticated or no gist ID');
             return;
         }
         
         try {
+            console.log('Starting sync to gist...');
+            
             // In a real app, this would update the gist content via GitHub API
             // For this demo, we'll simulate by storing in localStorage
             
             // Get data to sync
             const playHistory = Storage.loadPlayHistory();
+            console.log(`Syncing ${playHistory.length} plays to gist`);
+            
             const stats = Storage.loadCartridgeStats();
+            console.log(`Syncing stats with ${stats.totalPlays} total plays to gist`);
+            
             const apiKey = localStorage.getItem('srcVinylTracker_apiKey') || '';
             const apiSecret = localStorage.getItem('srcVinylTracker_apiSecret') || '';
             const username = localStorage.getItem('srcVinylTracker_username') || '';
             
-            // Create data object
+            // Check if we need to merge with existing gist data
+            let existingData = null;
+            const existingDataJson = localStorage.getItem(`srcVinylTracker_gistData_${gistId}`);
+            
+            if (existingDataJson) {
+                try {
+                    existingData = JSON.parse(existingDataJson);
+                    console.log('Found existing gist data to merge with');
+                } catch (parseError) {
+                    console.error('Error parsing existing gist data:', parseError);
+                    // Continue with new data only
+                }
+            }
+            
+            // Merge play histories if needed
+            let mergedPlayHistory = [...playHistory];
+            
+            if (existingData && existingData.playHistory && Array.isArray(existingData.playHistory)) {
+                console.log(`Found ${existingData.playHistory.length} plays in existing gist data`);
+                
+                // Create a map of local play IDs for quick lookup
+                const localPlayIds = new Set(playHistory.map(play => play.id));
+                
+                // Add plays from existing gist that don't exist locally
+                const playsToAdd = existingData.playHistory.filter(play => !localPlayIds.has(play.id));
+                console.log(`Adding ${playsToAdd.length} plays from existing gist data`);
+                
+                if (playsToAdd.length > 0) {
+                    mergedPlayHistory = [...playHistory, ...playsToAdd];
+                    
+                    // Sort by date (newest first)
+                    mergedPlayHistory.sort((a, b) => {
+                        // Handle missing or invalid dates
+                        if (!a.dateListened) return 1;
+                        if (!b.dateListened) return -1;
+                        
+                        try {
+                            const dateA = new Date(a.dateListened);
+                            const dateB = new Date(b.dateListened);
+                            
+                            // Check if dates are valid
+                            if (isNaN(dateA.getTime())) return 1;
+                            if (isNaN(dateB.getTime())) return -1;
+                            
+                            return dateB - dateA;
+                        } catch (error) {
+                            console.error('Error comparing dates:', error);
+                            return 0;
+                        }
+                    });
+                }
+            }
+            
+            // Create data object with merged play history
             const data = {
-                playHistory,
+                playHistory: mergedPlayHistory,
                 stats,
                 credentials: {
                     apiKey,
@@ -371,21 +501,27 @@ const Auth = (() => {
             // Update sync status
             const syncStatus = document.getElementById('sync-status');
             if (syncStatus) {
-                syncStatus.innerHTML = 'Last synced: ' + new Date().toLocaleTimeString();
+                const syncTime = new Date().toLocaleTimeString();
+                syncStatus.innerHTML = 'Last synced: ' + syncTime;
+                console.log('Updated sync status to:', syncTime);
             }
             
             // Simulate updating gist by storing in localStorage
-            console.log('Syncing data to Gist:', gistId);
+            console.log(`Syncing ${mergedPlayHistory.length} total plays to gist:`, gistId);
             
             // Store the data in localStorage with the gist ID as part of the key
             localStorage.setItem(`srcVinylTracker_gistData_${gistId}`, JSON.stringify(data));
             
-            console.log('Data synced to simulated Gist:', data);
+            console.log('Data synced to simulated gist successfully');
             
-            UI.showToast('Data synced to GitHub');
+            if (typeof UI !== 'undefined' && typeof UI.showToast === 'function') {
+                UI.showToast('Data synced to GitHub');
+            }
         } catch (error) {
             console.error('Error syncing to Gist:', error);
-            UI.showToast('Error syncing data: ' + error.message);
+            if (typeof UI !== 'undefined' && typeof UI.showToast === 'function') {
+                UI.showToast('Error syncing data: ' + error.message);
+            }
         }
     };
     

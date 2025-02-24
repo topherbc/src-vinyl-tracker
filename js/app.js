@@ -83,10 +83,30 @@ const App = (() => {
             
             document.body.appendChild(modal);
             
-            // Add event listeners
-            modal.querySelector('.close-dialog').addEventListener('click', () => {
-                modal.close();
-            });
+            // Add event listeners for the close button (with improved mobile support)
+            const closeButton = modal.querySelector('.close-dialog');
+            if (closeButton) {
+                // Add both click and touchend events for better mobile support
+                const closeModal = (event) => {
+                    event.preventDefault();
+                    console.log('Close button clicked/touched');
+                    if (modal && typeof modal.close === 'function') {
+                        modal.close();
+                    } else {
+                        console.log('Modal close method not available, using alternative');
+                        // Alternative method if modal.close() is not available
+                        modal.style.display = 'none';
+                        document.body.classList.remove('modal-open');
+                        // Remove the modal from the DOM as a last resort
+                        if (modal.parentNode) {
+                            modal.parentNode.removeChild(modal);
+                        }
+                    }
+                };
+                
+                closeButton.addEventListener('click', closeModal);
+                closeButton.addEventListener('touchend', closeModal);
+            }
             
             // Add OAuth button event listener if available
             const oauthButton = modal.querySelector('#discogs-oauth-button');

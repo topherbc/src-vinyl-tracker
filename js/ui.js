@@ -16,6 +16,8 @@ const UI = (() => {
     let dateListenedEl;
     let addPlayButtonEl;
     let settingsButtonEl;
+    let syncStatusEl;
+    let syncButtonEl;
     
     // Currently selected album
     let selectedAlbum = null;
@@ -36,6 +38,20 @@ const UI = (() => {
         dateListenedEl = document.getElementById('date-listened');
         addPlayButtonEl = document.getElementById('add-play-button');
         settingsButtonEl = document.getElementById('settings-button');
+        syncStatusEl = document.getElementById('sync-status');
+        
+        // Create and add sync button to sync status area if it doesn't exist
+        if (syncStatusEl && !document.getElementById('manual-sync-button')) {
+            syncButtonEl = document.createElement('button');
+            syncButtonEl.id = 'manual-sync-button';
+            syncButtonEl.className = 'icon-button';
+            syncButtonEl.title = 'Manually sync data across devices';
+            syncButtonEl.innerHTML = '<span class="material-icons">sync</span>';
+            syncStatusEl.appendChild(syncButtonEl);
+            
+            // Add event listener for sync button
+            syncButtonEl.addEventListener('click', handleManualSync);
+        }
         
         // Set today's date as default
         const today = new Date().toISOString().split('T')[0];
@@ -49,6 +65,50 @@ const UI = (() => {
         // Initial render
         renderPlayHistory();
         updatePlayCount();
+    };
+    
+    /**
+     * Handle manual sync button click
+     */
+    const handleManualSync = () => {
+        if (typeof Auth !== 'undefined' && Auth.isUserAuthenticated()) {
+            // Show syncing indicator
+            if (syncButtonEl) {
+                syncButtonEl.disabled = true;
+                syncButtonEl.innerHTML = '<span class="material-icons rotating">sync</span>';
+            }
+            
+            // Show toast
+            showToast('Syncing data across devices...');
+            
+            // Perform sync
+            Auth.syncToGist()
+                .then(() => {
+                    // After sync to gist, sync from gist to get any changes from other devices
+                    return Auth.syncFromGist();
+                })
+                .then(() => {
+                    // Update UI with any changes
+                    renderPlayHistory();
+                    updatePlayCount();
+                    
+                    // Show success toast
+                    showToast('Sync completed successfully!');
+                })
+                .catch(error => {
+                    console.error('Sync error:', error);
+                    showToast('Sync error: ' + error.message);
+                })
+                .finally(() => {
+                    // Reset sync button
+                    if (syncButtonEl) {
+                        syncButtonEl.disabled = false;
+                        syncButtonEl.innerHTML = '<span class="material-icons">sync</span>';
+                    }
+                });
+        } else {
+            showToast('Please log in with GitHub to sync data');
+        }
     };
     
     /**
@@ -347,6 +407,7 @@ const UI = (() => {
         init,
         renderPlayHistory,
         updatePlayCount,
-        showToast
+        showToast,
+        handleManualSync
     };
 })();
