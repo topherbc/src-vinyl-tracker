@@ -7,6 +7,7 @@ const App = (() => {
     // Default Discogs API credentials (empty)
     const DEFAULT_API_KEY = '';
     const DEFAULT_API_SECRET = '';
+    const DEFAULT_USERNAME = '';
     
     /**
      * Initialize the application
@@ -15,9 +16,10 @@ const App = (() => {
         // Check for stored API credentials
         const apiKey = localStorage.getItem('srcVinylTracker_apiKey') || DEFAULT_API_KEY;
         const apiSecret = localStorage.getItem('srcVinylTracker_apiSecret') || DEFAULT_API_SECRET;
+        const username = localStorage.getItem('srcVinylTracker_username') || DEFAULT_USERNAME;
         
         // Set API credentials
-        DiscogsAPI.setCredentials(apiKey, apiSecret);
+        DiscogsAPI.setCredentials(apiKey, apiSecret, username);
         
         // Initialize UI
         UI.init();
@@ -48,14 +50,18 @@ const App = (() => {
                         You can get these by registering an application at 
                         <a href="https://www.discogs.com/settings/developers" target="_blank">Discogs Developer Settings</a>.
                     </p>
-                    <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label full-width">
-                        <input class="mdl-textfield__input" type="text" id="api-key-input">
-                        <label class="mdl-textfield__label" for="api-key-input">API Key</label>
-                    </div>
-                    <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label full-width">
-                        <input class="mdl-textfield__input" type="text" id="api-secret-input">
-                        <label class="mdl-textfield__label" for="api-secret-input">API Secret</label>
-                    </div>
+                <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label full-width">
+                    <input class="mdl-textfield__input" type="text" id="api-key-input">
+                    <label class="mdl-textfield__label" for="api-key-input">API Key</label>
+                </div>
+                <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label full-width">
+                    <input class="mdl-textfield__input" type="text" id="api-secret-input">
+                    <label class="mdl-textfield__label" for="api-secret-input">API Secret</label>
+                </div>
+                <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label full-width">
+                    <input class="mdl-textfield__input" type="text" id="username-input">
+                    <label class="mdl-textfield__label" for="username-input">Discogs Username</label>
+                </div>
                 </div>
                 <div class="mdl-dialog__actions">
                     <button type="button" class="mdl-button save-credentials">Save</button>
@@ -89,17 +95,20 @@ const App = (() => {
     const saveApiCredentials = () => {
         const apiKeyInput = document.getElementById('api-key-input');
         const apiSecretInput = document.getElementById('api-secret-input');
+        const usernameInput = document.getElementById('username-input');
         
         const apiKey = apiKeyInput.value.trim();
         const apiSecret = apiSecretInput.value.trim();
+        const username = usernameInput.value.trim();
         
         if (apiKey && apiSecret) {
             // Save to localStorage
             localStorage.setItem('srcVinylTracker_apiKey', apiKey);
             localStorage.setItem('srcVinylTracker_apiSecret', apiSecret);
+            localStorage.setItem('srcVinylTracker_username', username);
             
             // Update API credentials
-            DiscogsAPI.setCredentials(apiKey, apiSecret);
+            DiscogsAPI.setCredentials(apiKey, apiSecret, username);
             
             // Close the modal
             const modal = document.getElementById('api-credentials-modal');
