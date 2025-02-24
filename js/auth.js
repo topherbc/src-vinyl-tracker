@@ -13,6 +13,8 @@ const Auth = (() => {
     const TOKEN_KEY = 'srcVinylTracker_githubToken';
     const USER_KEY = 'srcVinylTracker_githubUser';
     const GIST_ID_KEY = 'srcVinylTracker_gistId';
+    const PLAY_HISTORY_KEY = 'srcVinylTracker_playHistory';
+    const CARTRIDGE_STATS_KEY = 'srcVinylTracker_cartridgeStats';
     
     // State
     let isAuthenticated = false;
@@ -141,11 +143,40 @@ const Auth = (() => {
      */
     const findOrCreateGist = async () => {
         // In a real app, this would search for an existing gist or create a new one
-        // For this demo, we'll simulate the response
+        // For this demo, we'll simulate the process
         
-        // Simulate gist ID
-        gistId = 'gist_' + Math.random().toString(36).substring(2, 15);
-        localStorage.setItem(GIST_ID_KEY, gistId);
+        // Use a fixed gist ID based on the user's login
+        // This ensures the same gist is used across all devices
+        if (githubUser && githubUser.login) {
+            // Create a deterministic gist ID based on the user's login
+            // In a real app, we would search for existing gists with a specific description
+            gistId = `gist_${githubUser.login}_srcVinylTracker`;
+            localStorage.setItem(GIST_ID_KEY, gistId);
+            console.log('Using deterministic gist ID for user:', gistId);
+            
+            // Check if we have gist data for this ID
+            const gistDataJson = localStorage.getItem(`srcVinylTracker_gistData_${gistId}`);
+            if (!gistDataJson) {
+                console.log('No data found for gist ID, will create new data');
+            }
+        } else {
+            // Fallback to a random gist ID if no user info is available
+            const existingGistId = localStorage.getItem(GIST_ID_KEY);
+            
+            if (existingGistId) {
+                // Use the existing gist ID
+                gistId = existingGistId;
+                console.log('Using existing gist ID:', gistId);
+            } else {
+                // Create a new gist ID
+                gistId = 'gist_' + Math.random().toString(36).substring(2, 15);
+                localStorage.setItem(GIST_ID_KEY, gistId);
+                console.log('Created new random gist ID:', gistId);
+            }
+        }
+        
+        // In a real app, we would also check if the gist exists on GitHub
+        // and create it if it doesn't exist
     };
     
     /**
@@ -218,7 +249,7 @@ const Auth = (() => {
         
         try {
             // In a real app, this would fetch the gist content
-            // For this demo, we'll simulate the process
+            // For this demo, we'll simulate the process with localStorage
             
             // Update sync status
             const syncStatus = document.getElementById('sync-status');
@@ -229,14 +260,77 @@ const Auth = (() => {
             // Simulate fetching data
             console.log('Syncing data from Gist:', gistId);
             
-            // In a real implementation, we would:
-            // 1. Fetch the gist content
-            // 2. Parse the JSON data
-            // 3. Merge with local data
-            // 4. Update localStorage
-            
-            // For now, we'll just show a success message
-            UI.showToast('Data synced from GitHub');
+            // Get the stored gist data from localStorage
+            const gistDataJson = localStorage.getItem(`srcVinylTracker_gistData_${gistId}`);
+            if (gistDataJson) {
+                const gistData = JSON.parse(gistDataJson);
+                
+                // Update credentials if they exist in the gist data
+                if (gistData.credentials) {
+                    const { apiKey, apiSecret, username } = gistData.credentials;
+                    
+                    if (apiKey && apiSecret) {
+                        // Save to localStorage
+                        localStorage.setItem('srcVinylTracker_apiKey', apiKey);
+                        localStorage.setItem('srcVinylTracker_apiSecret', apiSecret);
+                        if (username) {
+                            localStorage.setItem('srcVinylTracker_username', username);
+                        }
+                        
+                        // Update DiscogsAPI credentials
+                        DiscogsAPI.setCredentials(apiKey, apiSecret, username);
+                        
+                        console.log('Credentials loaded from Gist:', { apiKey, apiSecret, username });
+                    }
+                }
+                
+                // Update play history if it exists in the gist data
+                if (gistData.playHistory && Array.isArray(gistData.playHistory)) {
+                    // Merge with local play history
+                    const localPlayHistory = Storage.loadPlayHistory();
+                    
+                    // Create a map of existing play IDs for quick lookup
+                    const existingPlayIds = new Set(localPlayHistory.map(play => play.id));
+                    
+                    // Add plays from gist that don't exist locally
+                    const newPlays = gistData.playHistory.filter(play => !existingPlayIds.has(play.id));
+                    
+                    if (newPlays.length > 0) {
+                        const mergedPlayHistory = [...newPlays, ...localPlayHistory];
+                        
+                        // Sort by date (newest first)
+                        mergedPlayHistory.sort((a, b) => {
+                            const dateA = new Date(a.dateListened);
+                            const dateB = new Date(b.dateListened);
+                            return dateB - dateA;
+                        });
+                        
+                        // Save merged play history
+                        localStorage.setItem(PLAY_HISTORY_KEY, JSON.stringify(mergedPlayHistory));
+                        
+                        // Update UI
+                        UI.renderPlayHistory();
+                    }
+                }
+                
+                // Update stats if they exist in the gist data
+                if (gistData.stats) {
+                    // Use the higher play count between local and gist
+                    const localStats = Storage.loadCartridgeStats();
+                    const gistStats = gistData.stats;
+                    
+                    if (gistStats.totalPlays > localStats.totalPlays) {
+                        localStorage.setItem(CARTRIDGE_STATS_KEY, JSON.stringify(gistStats));
+                        UI.updatePlayCount();
+                    }
+                }
+                
+                UI.showToast('Data synced from GitHub');
+            } else {
+                console.log('No gist data found, creating initial gist...');
+                // If no gist data exists yet, create it with current data
+                syncToGist();
+            }
         } catch (error) {
             console.error('Error syncing from Gist:', error);
             UI.showToast('Error syncing data: ' + error.message);
@@ -252,8 +346,8 @@ const Auth = (() => {
         }
         
         try {
-            // In a real app, this would update the gist content
-            // For this demo, we'll simulate the process
+            // In a real app, this would update the gist content via GitHub API
+            // For this demo, we'll simulate by storing in localStorage
             
             // Get data to sync
             const playHistory = Storage.loadPlayHistory();
@@ -280,15 +374,14 @@ const Auth = (() => {
                 syncStatus.innerHTML = 'Last synced: ' + new Date().toLocaleTimeString();
             }
             
-            // Simulate updating gist
+            // Simulate updating gist by storing in localStorage
             console.log('Syncing data to Gist:', gistId);
-            console.log('Data:', data);
             
-            // In a real implementation, we would:
-            // 1. Convert data to JSON
-            // 2. Update the gist via GitHub API
+            // Store the data in localStorage with the gist ID as part of the key
+            localStorage.setItem(`srcVinylTracker_gistData_${gistId}`, JSON.stringify(data));
             
-            // For now, we'll just show a success message
+            console.log('Data synced to simulated Gist:', data);
+            
             UI.showToast('Data synced to GitHub');
         } catch (error) {
             console.error('Error syncing to Gist:', error);
