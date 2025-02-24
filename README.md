@@ -8,8 +8,9 @@ A web application for tracking vinyl records played on a cartridge, developed by
 - Display play history with album covers, dates, and artist information
 - Search for albums using the Discogs API
 - Track total plays on your cartridge
-- Material Design dark theme
-- Responsive layout for desktop and mobile
+- Modern dark theme with responsive design
+- Cross-device credential storage option
+- Improved collection search with pagination
 - Data persistence using localStorage
 
 ## Setup
@@ -31,6 +32,16 @@ To use the search functionality, you'll need to register for a Discogs API key:
    - Website URL: (Your GitHub Pages URL or leave blank)
 5. After creating the application, you'll receive a Consumer Key and Consumer Secret
 6. Enter these credentials in the SRC Vinyl Tracker settings
+
+### Cross-Device Credential Storage
+
+The application offers two ways to store your Discogs API credentials:
+
+1. **LocalStorage (Default)**: Credentials are stored in your browser's localStorage and will only be available on the current device.
+
+2. **Config File**: By checking the "Store credentials in config.js" option in the settings modal, your credentials will be saved to the config.js file in the repository. This allows you to use the same credentials across all your devices.
+
+**Important Note**: If you enable the config file storage option, make sure to keep this repository private to protect your API credentials.
 
 ## GitHub Pages Deployment
 
@@ -55,18 +66,35 @@ To deploy this application to GitHub Pages:
 
 ### Viewing Play History
 
-The left side of the application displays your play history in chronological order, with the most recent plays at the top.
+The play history is displayed at the bottom of the application in chronological order, with the most recent plays at the top.
 
 ### Tracking Plays
 
-The total number of plays is displayed in the top-right corner of the application.
+The total number of plays is displayed in the header of the application.
+
+## Collection Search
+
+If you provide your Discogs username in the settings, the application will search your personal collection instead of the entire Discogs database. This feature:
+
+- Fetches your entire collection with pagination support
+- Uses a score-based matching system for better search results
+- Matches partial words and phrases
+- Works well with large collections
+
+## Mobile Optimizations
+
+The application is fully responsive and optimized for mobile devices:
+
+- Search box is positioned at the top for easy access
+- Settings modal is optimized for small screens
+- Touch-friendly UI elements
+- Smooth scrolling between sections
 
 ## Technologies Used
 
 - HTML5
 - CSS3
 - JavaScript (ES6+)
-- Material Design Lite
 - Discogs API
 - localStorage for data persistence
 
