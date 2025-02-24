@@ -18,9 +18,21 @@
                 <div class="play-counter">
                     <span id="play-count">0</span> Plays
                 </div>
-                <button id="settings-button" class="icon-button">
-                    <span class="material-icons">settings</span>
-                </button>
+                <div class="header-actions">
+                    <div id="github-login-button" class="login-button">
+                        <span class="material-icons">cloud_sync</span>
+                        <span>Login with GitHub</span>
+                    </div>
+                    <div id="github-user-info" class="user-info hidden">
+                        <!-- User info will be populated by auth.js -->
+                    </div>
+                    <button id="settings-button" class="icon-button">
+                        <span class="material-icons">settings</span>
+                    </button>
+                </div>
+            </div>
+            <div id="sync-status" class="sync-status hidden">
+                <!-- Sync status will be populated by auth.js -->
             </div>
         </header>
 
@@ -74,6 +86,7 @@
     <script src="js/storage.js"></script>
     <script src="js/discogs-api.js"></script>
     <script src="js/ui.js"></script>
+    <script src="js/auth.js"></script>
     <script src="js/app.js"></script>
 </body>
 </html>
