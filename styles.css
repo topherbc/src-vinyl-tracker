@@ -11,6 +11,16 @@
     --divider-color: rgba(255, 255, 255, 0.12);
 }
 
+/* Fix for dropdown text color */
+.mdl-menu__item {
+    color: white !important;
+}
+
+/* Fix for API credentials modal input text */
+#api-credentials-modal .mdl-textfield__input {
+    color: black !important;
+}
+
 /* Dark Theme Overrides */
 body {
     background-color: var(--dark-bg);
