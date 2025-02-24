@@ -13,12 +13,35 @@ const App = (() => {
      * Initialize the application
      */
     const init = () => {
+        // Make sure credentials are initialized from config or localStorage
+        DiscogsAPI.initCredentials();
+        
         // Initialize UI
         UI.init();
         
-        // Check if API credentials are set
+        // Initialize GitHub login button
+        initGitHubLogin();
+        
+        // Only show API credentials modal if no credentials are set
+        // This prevents the modal from showing on every page load
         if (!DiscogsAPI.hasCredentials()) {
             promptForApiCredentials();
+        }
+    };
+    
+    /**
+     * Initialize GitHub login button
+     */
+    const initGitHubLogin = () => {
+        const loginButton = document.getElementById('github-login-button');
+        if (loginButton) {
+            loginButton.addEventListener('click', () => {
+                if (typeof Auth !== 'undefined') {
+                    Auth.login();
+                } else {
+                    UI.showToast('GitHub authentication is not available');
+                }
+            });
         }
     };
     
@@ -160,6 +183,11 @@ const App = (() => {
             
             // Show confirmation
             UI.showToast('API credentials saved successfully!');
+            
+            // Sync to GitHub if authenticated
+            if (typeof Auth !== 'undefined' && Auth.isUserAuthenticated()) {
+                Auth.syncToGist();
+            }
         } else {
             UI.showToast('Please enter both API key and secret.');
         }
