@@ -68,13 +68,23 @@ const UI = (() => {
             const li = document.createElement('li');
             li.className = 'play-list-item';
             
-            // Format date
-            const date = new Date(play.dateListened);
-            const formattedDate = date.toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric'
-            });
+            // Format date - preserve the exact date without timezone conversion
+            let formattedDate;
+            
+            if (play.dateListened && play.dateListened.includes('-')) {
+                // Parse the ISO date string (YYYY-MM-DD) manually
+                const [year, month, day] = play.dateListened.split('-').map(num => parseInt(num, 10));
+                
+                // Create date parts for display (months are 0-indexed in JS Date)
+                const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                const monthName = monthNames[month - 1];
+                
+                // Format as "Feb 20, 2025"
+                formattedDate = `${monthName} ${day}, ${year}`;
+            } else {
+                // Fallback for any other date format
+                formattedDate = play.dateListened || 'Unknown date';
+            }
             
             li.innerHTML = `
                 <img class="album-cover-small" src="${play.coverUrl || 'assets/default-album.svg'}" 
