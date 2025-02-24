@@ -22,11 +22,8 @@ const App = (() => {
         // Initialize GitHub login button
         initGitHubLogin();
         
-        // Only show API credentials modal if no credentials are set
-        // This prevents the modal from showing on every page load
-        if (!DiscogsAPI.hasCredentials()) {
-            promptForApiCredentials();
-        }
+        // Don't show API credentials modal on initial load
+        // Let the user log in with GitHub first or click the settings button
     };
     
     /**
@@ -183,11 +180,6 @@ const App = (() => {
             
             // Show confirmation
             UI.showToast('API credentials saved successfully!');
-            
-            // Sync to GitHub if authenticated
-            if (typeof Auth !== 'undefined' && Auth.isUserAuthenticated()) {
-                Auth.syncToGist();
-            }
         } else {
             UI.showToast('Please enter both API key and secret.');
         }
