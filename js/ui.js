@@ -86,15 +86,32 @@ const UI = (() => {
                 formattedDate = play.dateListened || 'Unknown date';
             }
             
+            // Create the HTML content with delete button and Discogs links
             li.innerHTML = `
-                <img class="album-cover-small" src="${play.coverUrl || 'assets/default-album.svg'}" 
-                     alt="${play.title}" onerror="this.src='assets/default-album.svg'">
+                <a href="${play.discogsUrl || '#'}" target="_blank" class="album-link" title="View on Discogs">
+                    <img class="album-cover-small" src="${play.coverUrl || 'assets/default-album.svg'}" 
+                         alt="${play.title}" onerror="this.src='assets/default-album.svg'">
+                </a>
                 <div class="play-info">
                     <div class="play-date">${formattedDate}</div>
-                    <div class="play-album">${play.title}</div>
+                    <a href="${play.discogsUrl || '#'}" target="_blank" class="album-title-link" title="View on Discogs">
+                        <div class="play-album">${play.title}</div>
+                    </a>
                     <div class="play-artist">${play.artist}</div>
                 </div>
+                <button class="delete-play-button" title="Delete this play" data-id="${play.id}">
+                    <span class="material-icons">delete</span>
+                </button>
             `;
+            
+            // Add event listener for delete button
+            const deleteButton = li.querySelector('.delete-play-button');
+            if (deleteButton) {
+                deleteButton.addEventListener('click', (e) => {
+                    e.stopPropagation(); // Prevent event bubbling
+                    handleDeletePlay(play.id);
+                });
+            }
             
             playHistoryEl.appendChild(li);
         });
@@ -260,6 +277,25 @@ const UI = (() => {
         // Keep today's date
         const today = new Date().toISOString().split('T')[0];
         dateListenedEl.value = today;
+    };
+    
+    /**
+     * Handle deleting a play
+     * @param {String} playId - ID of the play to delete
+     */
+    const handleDeletePlay = (playId) => {
+        // Confirm deletion
+        if (confirm('Are you sure you want to delete this play?')) {
+            // Delete from storage
+            Storage.deletePlay(playId);
+            
+            // Update UI
+            renderPlayHistory();
+            updatePlayCount();
+            
+            // Show confirmation
+            showToast('Play deleted successfully!');
+        }
     };
     
     /**
