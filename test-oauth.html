@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discogs OAuth Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 0;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            min-height: 100px;
+        }
+        .success {
+            background-color: #dff0d8;
+            color: #3c763d;
+        }
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #333;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 4px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .toast.show {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <h1>Discogs OAuth Test</h1>
+    <p>This page tests the Discogs OAuth functionality.</p>
+    
+    <button id="login-button" onclick="return handleDiscogsOAuthLogin();">Log in with Discogs</button>
+    <button id="check-auth-button" onclick="checkDiscogsOAuthStatus(); return false;">Check Authentication Status</button>
+    <button id="show-toast-button">Test Toast Message</button>
+    
+    <h2>Additional Tests</h2>
+    <button id="test-login-button">Test Direct Login Function</button>
+    <button id="test-status-button">Test Status Function</button>
+    <button id="test-update-ui-button">Test Update UI Function</button>
+    
+    <div id="result">
+        <p>Results will appear here...</p>
+    </div>
+    
+    <!-- Scripts -->
+    <script src="js/config.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/discogs-oauth.js"></script>
+    <script src="js/global-helpers.js"></script>
+    <script src="js/test-oauth.js"></script>
+    
+    <script>
+        // Simple UI module for testing
+        const TestUI = {
+            showToast: function(message) {
+                console.log('TestUI.showToast called with message:', message);
+                
+                let toast = document.getElementById('toast');
+                if (!toast) {
+                    toast = document.createElement('div');
+                    toast.id = 'toast';
+                    toast.className = 'toast';
+                    document.body.appendChild(toast);
+                }
+                
+                toast.textContent = message;
+                toast.classList.add('show');
+                
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 3000);
+            }
+        };
+        
+        // Override UI with our test UI if needed
+        if (typeof UI === 'undefined') {
+            window.UI = TestUI;
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            const resultDiv = document.getElementById('result');
+            const loginButton = document.getElementById('login-button');
+            const checkAuthButton = document.getElementById('check-auth-button');
+            const showToastButton = document.getElementById('show-toast-button');
+            
+            // Log initial state
+            resultDiv.innerHTML = `
+                <p>Config loaded: ${typeof Config !== 'undefined'}</p>
+                <p>DiscogsOAuth loaded: ${typeof DiscogsOAuth !== 'undefined'}</p>
+                <p>UI loaded: ${typeof UI !== 'undefined'}</p>
+                <p>CONSUMER_KEY: ${typeof Config !== 'undefined' ? Config.DISCOGS_CONSUMER_KEY : 'undefined'}</p>
+            `;
+            
+            // Add event listeners
+            loginButton.addEventListener('click', function() {
+                resultDiv.innerHTML += '<p>Login button clicked</p>';
+                
+                try {
+                    if (typeof DiscogsOAuth !== 'undefined') {
+                        resultDiv.innerHTML += '<p>Calling DiscogsOAuth.login()</p>';
+                        DiscogsOAuth.login();
+                    } else {
+                        resultDiv.innerHTML += '<p>Error: DiscogsOAuth is not defined</p>';
+                    }
+                } catch (error) {
+                    resultDiv.innerHTML += `<p>Error: ${error.message}</p>`;
+                    console.error('Error in login button click handler:', error);
+                }
+            });
+            
+            checkAuthButton.addEventListener('click', function() {
+                try {
+                    if (typeof DiscogsOAuth !== 'undefined') {
+                        const isAuthenticated = DiscogsOAuth.isAuthenticated();
+                        const username = DiscogsOAuth.getUsername ? DiscogsOAuth.getUsername() : 'N/A';
+                        
+                        resultDiv.innerHTML += `
+                            <p>Authentication status: ${isAuthenticated ? 'Authenticated' : 'Not authenticated'}</p>
+                            <p>Username: ${username}</p>
+                        `;
+                        
+                        if (isAuthenticated) {
+                            resultDiv.classList.add('success');
+                        }
+                    } else {
+                        resultDiv.innerHTML += '<p>Error: DiscogsOAuth is not defined</p>';
+                    }
+                } catch (error) {
+                    resultDiv.innerHTML += `<p>Error: ${error.message}</p>`;
+                    console.error('Error in check auth button click handler:', error);
+                }
+            });
+            
+            showToastButton.addEventListener('click', function() {
+                try {
+                    if (typeof UI !== 'undefined' && typeof UI.showToast === 'function') {
+                        UI.showToast('This is a test toast message');
+                        resultDiv.innerHTML += '<p>Toast message shown</p>';
+                    } else {
+                        resultDiv.innerHTML += '<p>Error: UI.showToast is not defined</p>';
+                    }
+                } catch (error) {
+                    resultDiv.innerHTML += `<p>Error: ${error.message}</p>`;
+                    console.error('Error in show toast button click handler:', error);
+                }
+            });
+        });
+    </script>
+</body>
+</html>

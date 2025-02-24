@@ -68,7 +68,8 @@ const App = (() => {
                     <div class="auth-option">
                         <h5>OAuth Authentication</h5>
                         <p>Log in directly with your Discogs account for a seamless experience.</p>
-                        <button id="discogs-oauth-button" class="primary-button ${oauthAuthenticated ? 'success' : ''}">
+                        <button id="discogs-oauth-button" class="primary-button ${oauthAuthenticated ? 'success' : ''}" 
+                                onclick="return handleDiscogsOAuthLogin();">
                             ${oauthAuthenticated ? 'Connected with Discogs' : 'Log in with Discogs'}
                         </button>
                         ${oauthAuthenticated ? `<p class="success-text">✓ Successfully authenticated as ${username || 'Discogs User'}</p>` : ''}
@@ -90,8 +91,10 @@ const App = (() => {
             // Add OAuth button event listener if available
             const oauthButton = modal.querySelector('#discogs-oauth-button');
             if (oauthButton && typeof DiscogsOAuth !== 'undefined') {
-                oauthButton.addEventListener('click', () => {
-                    DiscogsOAuth.login();
+                oauthButton.addEventListener('click', (event) => {
+                    console.log('OAuth button clicked via event listener');
+                    event.preventDefault();
+                    handleDiscogsOAuthLogin();
                 });
             }
         } else {
