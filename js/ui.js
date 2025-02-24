@@ -14,7 +14,8 @@ const UI = (() => {
     let albumTitleEl;
     let albumArtistEl;
     let dateListenedEl;
-    let addPlayFormEl;
+    let addPlayButtonEl;
+    let settingsButtonEl;
     
     // Currently selected album
     let selectedAlbum = null;
@@ -33,7 +34,8 @@ const UI = (() => {
         albumTitleEl = document.getElementById('album-title');
         albumArtistEl = document.getElementById('album-artist');
         dateListenedEl = document.getElementById('date-listened');
-        addPlayFormEl = document.getElementById('add-play-form');
+        addPlayButtonEl = document.getElementById('add-play-button');
+        settingsButtonEl = document.getElementById('settings-button');
         
         // Set today's date as default
         const today = new Date().toISOString().split('T')[0];
@@ -41,7 +43,8 @@ const UI = (() => {
         
         // Add event listeners
         searchInputEl.addEventListener('input', debounce(handleSearch, 500));
-        addPlayFormEl.addEventListener('submit', handleAddPlay);
+        addPlayButtonEl.addEventListener('click', handleAddPlay);
+        settingsButtonEl.addEventListener('click', () => App.promptForApiCredentials());
         
         // Initial render
         renderPlayHistory();
@@ -113,7 +116,7 @@ const UI = (() => {
             if (!DiscogsAPI.hasCredentials()) {
                 searchResultsEl.innerHTML = `
                     <div class="error-message">
-                        Discogs API credentials not set. Please add your API key and secret.
+                        Discogs API credentials not set. Please click the settings icon to add your API key and secret.
                     </div>
                 `;
                 return;
@@ -129,7 +132,7 @@ const UI = (() => {
             const results = await DiscogsAPI.searchAlbums(query);
             
             if (results.length === 0) {
-                searchResultsEl.innerHTML = '<div class="no-results">No results found.</div>';
+                searchResultsEl.innerHTML = '<div class="no-results">No results found. Try a different search term.</div>';
                 return;
             }
             
@@ -150,8 +153,8 @@ const UI = (() => {
     const renderSearchResults = (results) => {
         searchResultsEl.innerHTML = '';
         
-        // Limit to first 10 results to avoid overwhelming the UI
-        const limitedResults = results.slice(0, 10);
+        // Limit to first 20 results to avoid overwhelming the UI
+        const limitedResults = results.slice(0, 20);
         
         limitedResults.forEach(result => {
             const formattedResult = DiscogsAPI.formatAlbumData(result);
@@ -192,24 +195,24 @@ const UI = (() => {
         // Clear search results
         searchResultsEl.innerHTML = '';
         searchInputEl.value = '';
+        
+        // Scroll to selected album section
+        selectedAlbumEl.scrollIntoView({ behavior: 'smooth' });
     };
     
     /**
      * Handle adding a new play
-     * @param {Event} event - Form submit event
      */
-    const handleAddPlay = (event) => {
-        event.preventDefault();
-        
+    const handleAddPlay = () => {
         if (!selectedAlbum) {
-            alert('Please select an album first.');
+            showToast('Please select an album first.');
             return;
         }
         
         const dateListened = dateListenedEl.value;
         
         if (!dateListened) {
-            alert('Please select a date.');
+            showToast('Please select a date.');
             return;
         }
         
@@ -231,6 +234,9 @@ const UI = (() => {
         
         // Show confirmation
         showToast('Play added successfully!');
+        
+        // Scroll to play history
+        document.querySelector('.play-history-section').scrollIntoView({ behavior: 'smooth' });
     };
     
     /**
@@ -257,21 +263,17 @@ const UI = (() => {
         if (!toast) {
             toast = document.createElement('div');
             toast.id = 'toast';
-            toast.className = 'mdl-js-snackbar mdl-snackbar';
-            toast.innerHTML = `
-                <div class="mdl-snackbar__text"></div>
-                <button class="mdl-snackbar__action" type="button"></button>
-            `;
             document.body.appendChild(toast);
         }
         
-        // Show toast message
-        const data = {
-            message: message,
-            timeout: 2000
-        };
+        // Set message and show toast
+        toast.textContent = message;
+        toast.classList.add('show');
         
-        toast.MaterialSnackbar.showSnackbar(data);
+        // Hide toast after 3 seconds
+        setTimeout(() => {
+            toast.classList.remove('show');
+        }, 3000);
     };
     
     /**
