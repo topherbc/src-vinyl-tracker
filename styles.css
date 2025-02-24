@@ -1,0 +1,199 @@
+/* SRC Vinyl Tracker - Custom Styles */
+
+/* Dark Theme Colors */
+:root {
+    --primary-color: #3f51b5;
+    --accent-color: #ff4081;
+    --dark-bg: #121212;
+    --card-bg: #1e1e1e;
+    --text-primary: rgba(255, 255, 255, 0.87);
+    --text-secondary: rgba(255, 255, 255, 0.6);
+    --divider-color: rgba(255, 255, 255, 0.12);
+}
+
+/* Dark Theme Overrides */
+body {
+    background-color: var(--dark-bg);
+    color: var(--text-primary);
+    font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
+}
+
+.mdl-layout__header {
+    background-color: var(--primary-color);
+}
+
+.mdl-card {
+    background-color: var(--card-bg);
+    color: var(--text-primary);
+}
+
+.mdl-card__title {
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--divider-color);
+}
+
+.mdl-textfield__label {
+    color: var(--text-secondary);
+}
+
+.mdl-textfield__input {
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--text-secondary);
+}
+
+.mdl-button--colored {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.mdl-mini-footer {
+    background-color: var(--card-bg);
+    color: var(--text-secondary);
+}
+
+/* Layout Styles */
+.full-width {
+    width: 100%;
+}
+
+.page-content {
+    padding: 16px;
+}
+
+/* Play Counter */
+.play-counter {
+    font-size: 18px;
+    font-weight: 500;
+    padding: 8px 16px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+}
+
+#play-count {
+    font-weight: bold;
+}
+
+/* Play History List */
+.play-list {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.play-list-item {
+    padding: 12px 0;
+    border-bottom: 1px solid var(--divider-color);
+    display: flex;
+    align-items: center;
+}
+
+.play-list-item:last-child {
+    border-bottom: none;
+}
+
+.album-cover-small {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    margin-right: 16px;
+    border-radius: 4px;
+}
+
+.play-info {
+    flex-grow: 1;
+}
+
+.play-date {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+}
+
+.play-album {
+    font-weight: 500;
+    margin-bottom: 2px;
+}
+
+.play-artist {
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+/* Search Results */
+.search-results {
+    margin-top: 16px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.search-result-item {
+    padding: 8px;
+    border-bottom: 1px solid var(--divider-color);
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.search-result-item:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.search-result-item img {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    margin-right: 12px;
+    border-radius: 4px;
+}
+
+/* Selected Album */
+.selected-album {
+    margin: 16px 0;
+    padding: 16px;
+    border: 1px solid var(--divider-color);
+    border-radius: 4px;
+}
+
+.album-details {
+    display: flex;
+    align-items: center;
+}
+
+#album-cover {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    margin-right: 16px;
+    border-radius: 4px;
+}
+
+.album-info {
+    flex-grow: 1;
+}
+
+.album-info h4 {
+    margin: 0 0 8px 0;
+}
+
+.album-info p {
+    margin: 0;
+    color: var(--text-secondary);
+}
+
+.hidden {
+    display: none;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 839px) {
+    .mdl-cell--6-col {
+        width: 100%;
+    }
+    
+    .play-history-container {
+        margin-bottom: 16px;
+    }
+}
