@@ -40,40 +40,30 @@ const App = (() => {
         if (!modal) {
             modal = document.createElement('dialog');
             modal.id = 'api-credentials-modal';
-            modal.className = 'mdl-dialog';
             
             modal.innerHTML = `
-                <h4 class="mdl-dialog__title">Discogs API Credentials</h4>
-                <div class="mdl-dialog__content">
-                    <p>
-                        To use the Discogs API, you need to provide your API key and secret.
-                        You can get these by registering an application at 
-                        <a href="https://www.discogs.com/settings/developers" target="_blank">Discogs Developer Settings</a>.
-                    </p>
-                <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label full-width">
-                    <input class="mdl-textfield__input" type="text" id="api-key-input">
-                    <label class="mdl-textfield__label" for="api-key-input">API Key</label>
+                <h4>Discogs API Credentials</h4>
+                <p>
+                    To use the Discogs API, you need to provide your API key and secret.
+                    You can get these by registering an application at 
+                    <a href="https://www.discogs.com/settings/developers" target="_blank">Discogs Developer Settings</a>.
+                </p>
+                <div>
+                    <input type="text" id="api-key-input" placeholder="API Key">
                 </div>
-                <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label full-width">
-                    <input class="mdl-textfield__input" type="text" id="api-secret-input">
-                    <label class="mdl-textfield__label" for="api-secret-input">API Secret</label>
+                <div>
+                    <input type="text" id="api-secret-input" placeholder="API Secret">
                 </div>
-                <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label full-width">
-                    <input class="mdl-textfield__input" type="text" id="username-input">
-                    <label class="mdl-textfield__label" for="username-input">Discogs Username</label>
+                <div>
+                    <input type="text" id="username-input" placeholder="Discogs Username">
                 </div>
-                </div>
-                <div class="mdl-dialog__actions">
-                    <button type="button" class="mdl-button save-credentials">Save</button>
-                    <button type="button" class="mdl-button close-dialog">Cancel</button>
+                <div>
+                    <button type="button" class="save-credentials">Save</button>
+                    <button type="button" class="close-dialog">Cancel</button>
                 </div>
             `;
             
             document.body.appendChild(modal);
-            
-            // Register Material Design Lite components
-            componentHandler.upgradeElement(modal);
-            componentHandler.upgradeElements(modal.querySelectorAll('.mdl-textfield'));
             
             // Add event listeners
             modal.querySelector('.save-credentials').addEventListener('click', saveApiCredentials);
@@ -82,9 +72,21 @@ const App = (() => {
             });
         }
         
+        // Set existing values if available
+        const apiKey = localStorage.getItem('srcVinylTracker_apiKey') || '';
+        const apiSecret = localStorage.getItem('srcVinylTracker_apiSecret') || '';
+        const username = localStorage.getItem('srcVinylTracker_username') || '';
+        
+        modal.querySelector('#api-key-input').value = apiKey;
+        modal.querySelector('#api-secret-input').value = apiSecret;
+        modal.querySelector('#username-input').value = username;
+        
         // Show the modal
         if (!modal.showModal) {
-            dialogPolyfill.registerDialog(modal);
+            // Polyfill for older browsers
+            if (typeof dialogPolyfill !== 'undefined') {
+                dialogPolyfill.registerDialog(modal);
+            }
         }
         modal.showModal();
     };
@@ -117,32 +119,12 @@ const App = (() => {
             // Show confirmation
             UI.showToast('API credentials saved successfully!');
         } else {
-            alert('Please enter both API key and secret.');
+            UI.showToast('Please enter both API key and secret.');
         }
     };
     
-    /**
-     * Add settings button to header
-     */
-    const addSettingsButton = () => {
-        const headerRow = document.querySelector('.mdl-layout__header-row');
-        
-        const settingsButton = document.createElement('button');
-        settingsButton.className = 'mdl-button mdl-js-button mdl-button--icon';
-        settingsButton.innerHTML = '<i class="material-icons">settings</i>';
-        settingsButton.addEventListener('click', promptForApiCredentials);
-        
-        headerRow.appendChild(settingsButton);
-        
-        // Register Material Design Lite component
-        componentHandler.upgradeElement(settingsButton);
-    };
-    
     // Initialize the application when the DOM is loaded
-    document.addEventListener('DOMContentLoaded', () => {
-        init();
-        addSettingsButton();
-    });
+    document.addEventListener('DOMContentLoaded', init);
     
     // Public API
     return {
