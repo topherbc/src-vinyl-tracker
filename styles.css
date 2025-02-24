@@ -363,10 +363,56 @@ body {
     align-items: center;
     padding: 1rem;
     border-bottom: 1px solid var(--divider-color);
+    position: relative;
 }
 
 .play-list-item:last-child {
     border-bottom: none;
+}
+
+/* Delete button */
+.delete-play-button {
+    background: none;
+    border: none;
+    color: var(--error);
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s;
+    opacity: 0.7;
+    margin-left: 0.5rem;
+}
+
+.delete-play-button:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    opacity: 1;
+}
+
+.delete-play-button .material-icons {
+    font-size: 1.25rem;
+}
+
+/* Album links */
+.album-link {
+    display: block;
+    transition: opacity 0.2s;
+}
+
+.album-link:hover {
+    opacity: 0.8;
+}
+
+.album-title-link {
+    color: var(--on-surface);
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.album-title-link:hover {
+    color: var(--primary-light);
 }
 
 .album-cover-small {
@@ -520,25 +566,42 @@ body {
         border-radius: 0;
         padding: 1rem;
         margin: 0;
-        height: 100%;
-        max-height: none;
+        height: auto;
+        max-height: 90vh;
         display: flex;
         flex-direction: column;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 1000;
     }
     
     .settings-section {
         flex: 1;
         overflow-y: auto;
+        max-height: 60vh;
     }
     
     .button-group {
         padding-top: 1rem;
         border-top: 1px solid var(--divider-color);
+        display: flex;
+        justify-content: space-between;
     }
     
     #api-credentials-modal button {
         flex: 1;
         text-align: center;
+        margin: 0 0.25rem;
+        font-size: 1rem;
+        padding: 1rem;
+    }
+    
+    #api-credentials-modal .close-dialog {
+        background-color: rgba(255, 255, 255, 0.1);
+        color: var(--on-surface);
+        font-weight: bold;
     }
 }
 
