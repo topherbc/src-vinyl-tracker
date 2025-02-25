@@ -4,26 +4,18 @@
  */
 
 const App = (() => {
-    // Default Discogs API credentials (empty)
-    const DEFAULT_API_KEY = '';
-    const DEFAULT_API_SECRET = '';
-    const DEFAULT_USERNAME = '';
-    
     /**
      * Initialize the application
      */
     const init = () => {
-        // Make sure credentials are initialized from config or localStorage
-        DiscogsAPI.initCredentials();
-        
         // Initialize UI
         UI.init();
         
         // Initialize GitHub login button
         initGitHubLogin();
         
-        // Don't show API credentials modal on initial load
-        // Let the user log in with GitHub first or click the settings button
+        // Initialize settings button
+        initSettingsButton();
     };
     
     /**
@@ -43,37 +35,67 @@ const App = (() => {
     };
     
     /**
+     * Initialize settings button
+     */
+    const initSettingsButton = () => {
+        const settingsButton = document.getElementById('settings-button');
+        if (settingsButton) {
+            settingsButton.addEventListener('click', () => {
+                promptForDiscogsAuth();
+            });
+        }
+    };
+    
+    /**
      * Prompt user for Discogs authentication
      */
-    const promptForApiCredentials = () => {
-        // Create modal for API credentials if it doesn't exist
-        let modal = document.getElementById('api-credentials-modal');
+    const promptForDiscogsAuth = () => {
+        // Create modal for Discogs authentication if it doesn't exist
+        let modal = document.getElementById('discogs-auth-modal');
         
         if (!modal) {
             modal = document.createElement('dialog');
-            modal.id = 'api-credentials-modal';
+            modal.id = 'discogs-auth-modal';
             
-            // Check if OAuth is available
-            const oauthAvailable = typeof DiscogsOAuth !== 'undefined';
-            const oauthAuthenticated = oauthAvailable && DiscogsOAuth.isAuthenticated();
-            const username = oauthAuthenticated ? DiscogsOAuth.getUsername() : '';
+            // Check if auth is available
+            const authAvailable = typeof DiscogsAuth !== 'undefined';
+            const isAuthenticated = authAvailable && DiscogsAuth.isAuthenticated();
+            const username = isAuthenticated ? DiscogsAuth.getUsername() : '';
             
             modal.innerHTML = `
                 <h4>Discogs Authentication</h4>
                 <p>
-                    Connect to Discogs to search for albums and track your vinyl collection.
+                    Connect to Discogs to search for albums in your collection.
                 </p>
                 
-                <div class="auth-options">
-                    <div class="auth-option">
-                        <h5>OAuth Authentication</h5>
-                        <p>Log in directly with your Discogs account for a seamless experience.</p>
-                        <button id="discogs-oauth-button" class="primary-button ${oauthAuthenticated ? 'success' : ''}" 
-                                onclick="return handleDiscogsOAuthLogin();">
-                            ${oauthAuthenticated ? 'Connected with Discogs' : 'Log in with Discogs'}
-                        </button>
-                        ${oauthAuthenticated ? `<p class="success-text">✓ Successfully authenticated as ${username || 'Discogs User'}</p>` : ''}
+                <div class="auth-form">
+                    <div class="form-group">
+                        <label for="discogs-api-key">Discogs API Token</label>
+                        <input type="text" id="discogs-api-key" placeholder="Your Discogs API token">
+                        <p class="help-text">
+                            <a href="https://www.discogs.com/settings/developers" target="_blank">
+                                Get your API token from Discogs Developer Settings
+                            </a>
+                        </p>
                     </div>
+                    
+                    <div class="form-group">
+                        <label for="discogs-username">Discogs Username</label>
+                        <input type="text" id="discogs-username" placeholder="Your Discogs username">
+                        <p class="help-text">
+                            Required to search your collection
+                        </p>
+                    </div>
+                    
+                    <p class="auth-status">
+                        ${isAuthenticated 
+                            ? `✓ Connected to Discogs${username ? ` as ${username}` : ''}`
+                            : 'Not connected to Discogs'}
+                    </p>
+                    
+                    <button id="save-discogs-credentials" class="primary-button">
+                        ${isAuthenticated ? 'Update Credentials' : 'Connect to Discogs'}
+                    </button>
                 </div>
                 
                 <div class="button-group">
@@ -83,10 +105,9 @@ const App = (() => {
             
             document.body.appendChild(modal);
             
-            // Add event listeners for the close button (with improved mobile support)
+            // Add event listeners for the close button
             const closeButton = modal.querySelector('.close-dialog');
             if (closeButton) {
-                // Add both click and touchend events for better mobile support
                 const closeModal = (event) => {
                     event.preventDefault();
                     console.log('Close button clicked/touched');
@@ -108,19 +129,29 @@ const App = (() => {
                 closeButton.addEventListener('touchend', closeModal);
             }
             
-            // Add OAuth button event listener if available
-            const oauthButton = modal.querySelector('#discogs-oauth-button');
-            if (oauthButton && typeof DiscogsOAuth !== 'undefined') {
-                oauthButton.addEventListener('click', (event) => {
-                    console.log('OAuth button clicked via event listener');
-                    event.preventDefault();
-                    handleDiscogsOAuthLogin();
-                });
+            // Add save button event listener
+            const saveButton = modal.querySelector('#save-discogs-credentials');
+            if (saveButton) {
+                saveButton.addEventListener('click', saveDiscogsCredentials);
+            }
+            
+            // Fill in existing values if authenticated
+            if (isAuthenticated) {
+                const apiKeyInput = modal.querySelector('#discogs-api-key');
+                const usernameInput = modal.querySelector('#discogs-username');
+                
+                if (apiKeyInput && DiscogsAuth.getApiKey()) {
+                    apiKeyInput.value = DiscogsAuth.getApiKey();
+                }
+                
+                if (usernameInput && DiscogsAuth.getUsername()) {
+                    usernameInput.value = DiscogsAuth.getUsername();
+                }
             }
         } else {
-            // Update OAuth button if needed
-            if (typeof DiscogsOAuth !== 'undefined') {
-                DiscogsOAuth.updateAuthUI();
+            // Update auth status if needed
+            if (typeof DiscogsAuth !== 'undefined') {
+                DiscogsAuth.updateAuthUI();
             }
         }
         
@@ -135,78 +166,116 @@ const App = (() => {
     };
     
     /**
-     * Save Discogs API credentials
+     * Save Discogs credentials
      */
-    const saveApiCredentials = () => {
-        const apiKeyInput = document.getElementById('api-key-input');
-        const apiSecretInput = document.getElementById('api-secret-input');
-        const usernameInput = document.getElementById('username-input');
-        const useHardcodedInput = document.getElementById('use-hardcoded');
+    const saveDiscogsCredentials = async () => {
+        const modal = document.getElementById('discogs-auth-modal');
+        if (!modal) return;
+        
+        const apiKeyInput = modal.querySelector('#discogs-api-key');
+        const usernameInput = modal.querySelector('#discogs-username');
+        const statusText = modal.querySelector('.auth-status');
+        
+        if (!apiKeyInput) return;
         
         const apiKey = apiKeyInput.value.trim();
-        const apiSecret = apiSecretInput.value.trim();
-        const username = usernameInput.value.trim();
-        const useHardcoded = useHardcodedInput.checked;
+        const username = usernameInput ? usernameInput.value.trim() : '';
         
-        if (apiKey && apiSecret) {
-            // Save to localStorage (always save to localStorage as a backup)
-            localStorage.setItem('srcVinylTracker_apiKey', apiKey);
-            localStorage.setItem('srcVinylTracker_apiSecret', apiSecret);
-            localStorage.setItem('srcVinylTracker_username', username);
-            
-            // If using hardcoded credentials, update the config.js file
-            if (useHardcoded && typeof Config !== 'undefined') {
-                // In a real app, we would update the config.js file here
-                // For this demo, we'll just show a message
-                console.log('Saving credentials to config.js...');
-                console.log('API Key:', apiKey);
-                console.log('API Secret:', apiSecret);
-                console.log('Username:', username);
+        if (!apiKey) {
+            UI.showToast('Please enter your Discogs API token');
+            return;
+        }
+        
+        // Show loading state
+        const saveButton = modal.querySelector('#save-discogs-credentials');
+        if (saveButton) {
+            saveButton.textContent = 'Connecting...';
+            saveButton.disabled = true;
+        }
+        
+        if (statusText) {
+            statusText.textContent = 'Validating credentials...';
+            statusText.classList.remove('success-text');
+        }
+        
+        try {
+            // Set credentials in DiscogsAuth module
+            if (typeof DiscogsAuth !== 'undefined') {
+                const success = await DiscogsAuth.setCredentials(apiKey, username);
                 
-                // Simulate updating the Config object
-                if (typeof Config !== 'undefined') {
-                    Config.DISCOGS_API_KEY = apiKey;
-                    Config.DISCOGS_API_SECRET = apiSecret;
-                    Config.DISCOGS_USERNAME = username;
-                    Config.USE_HARDCODED_CREDENTIALS = true;
+                if (success) {
+                    UI.showToast(`Successfully connected to Discogs${username ? ` as ${username}` : ''}`);
+                    
+                    // Update status text
+                    if (statusText) {
+                        statusText.textContent = `✓ Connected to Discogs${username ? ` as ${username}` : ''}`;
+                        statusText.classList.add('success-text');
+                    }
+                    
+                    // Update save button
+                    if (saveButton) {
+                        saveButton.textContent = 'Update Credentials';
+                        saveButton.disabled = false;
+                    }
+                } else {
+                    UI.showToast('Failed to connect to Discogs. Please check your credentials.');
+                    
+                    // Update status text
+                    if (statusText) {
+                        statusText.textContent = 'Invalid credentials. Please check and try again.';
+                        statusText.classList.remove('success-text');
+                    }
+                    
+                    // Update save button
+                    if (saveButton) {
+                        saveButton.textContent = 'Connect to Discogs';
+                        saveButton.disabled = false;
+                    }
                 }
-            } else if (typeof Config !== 'undefined') {
-                // If not using hardcoded credentials, set the flag to false
-                Config.USE_HARDCODED_CREDENTIALS = false;
+            } else {
+                UI.showToast('Discogs authentication module not available');
+                
+                // Update save button
+                if (saveButton) {
+                    saveButton.textContent = 'Connect to Discogs';
+                    saveButton.disabled = false;
+                }
+            }
+        } catch (error) {
+            console.error('Error saving Discogs credentials:', error);
+            UI.showToast('Error connecting to Discogs: ' + error.message);
+            
+            // Update status text
+            if (statusText) {
+                statusText.textContent = 'Error connecting to Discogs. Please try again.';
+                statusText.classList.remove('success-text');
             }
             
-            // Update API credentials
-            DiscogsAPI.setCredentials(apiKey, apiSecret, username);
-            
-            // Sync to GitHub Gist if authenticated
-            if (typeof Auth !== 'undefined' && Auth.isUserAuthenticated()) {
-                Auth.syncToGist();
+            // Update save button
+            if (saveButton) {
+                saveButton.textContent = 'Connect to Discogs';
+                saveButton.disabled = false;
             }
-            
-            // Close the modal
-            const modal = document.getElementById('api-credentials-modal');
-            modal.close();
-            
-            // Show confirmation
-            UI.showToast('API credentials saved successfully!');
-        } else {
-            UI.showToast('Please enter both API key and secret.');
         }
     };
     
     /**
-     * Update config.js file with new credentials
-     * Note: In a real app, this would be handled by a server-side script
-     * For this demo, we'll just log the values
+     * Check if both GitHub and Discogs authentication are needed
+     * and prompt the user if necessary
      */
-    const updateConfigFile = (apiKey, apiSecret, username, useHardcoded) => {
-        console.log('Updating config.js with new credentials...');
-        console.log('This would normally be done by a server-side script.');
-        console.log('For this demo, please manually update the config.js file with these values:');
-        console.log(`DISCOGS_API_KEY: ${apiKey}`);
-        console.log(`DISCOGS_API_SECRET: ${apiSecret}`);
-        console.log(`DISCOGS_USERNAME: ${username}`);
-        console.log(`USE_HARDCODED_CREDENTIALS: ${useHardcoded}`);
+    const checkAuthentication = () => {
+        // Check if GitHub authentication is needed
+        const githubAuthenticated = typeof Auth !== 'undefined' && Auth.isUserAuthenticated();
+        
+        // Check if Discogs authentication is needed
+        const discogsAuthenticated = typeof DiscogsAuth !== 'undefined' && DiscogsAuth.isAuthenticated();
+        
+        if (!githubAuthenticated) {
+            UI.showToast('Please log in with GitHub for cross-device synchronization');
+        } else if (!discogsAuthenticated) {
+            // If GitHub is authenticated but Discogs is not, prompt for Discogs auth
+            promptForDiscogsAuth();
+        }
     };
     
     // Initialize the application when the DOM is loaded
@@ -215,6 +284,7 @@ const App = (() => {
     // Public API
     return {
         init,
-        promptForApiCredentials
+        promptForDiscogsAuth,
+        checkAuthentication
     };
 })();

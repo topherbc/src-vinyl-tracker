@@ -15,6 +15,7 @@
     --on-surface: rgba(255, 255, 255, 0.87);
     --on-error: #000000;
     --divider-color: rgba(255, 255, 255, 0.12);
+    --success-color: #4caf50;
 }
 
 /* Base Styles */
@@ -248,6 +249,15 @@ body {
 
 .primary-button:hover {
     background-color: var(--primary-dark);
+}
+
+.primary-button:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.primary-button.success {
+    background-color: var(--success-color);
 }
 
 /* Search Section */
@@ -491,8 +501,8 @@ body {
     display: none;
 }
 
-/* API credentials modal */
-#api-credentials-modal {
+/* Discogs Auth Modal */
+#discogs-auth-modal {
     background-color: var(--surface);
     color: var(--on-surface);
     border-radius: 8px;
@@ -503,41 +513,41 @@ body {
     font-size: 16px;
 }
 
-#api-credentials-modal h4 {
+#discogs-auth-modal h4 {
     margin-bottom: 1rem;
     font-size: 1.25rem;
 }
 
-#api-credentials-modal p {
+#discogs-auth-modal p {
     margin-bottom: 1.5rem;
     line-height: 1.5;
 }
 
-#api-credentials-modal a {
+#discogs-auth-modal a {
     color: var(--primary-light);
     text-decoration: none;
 }
 
-#api-credentials-modal a:hover {
+#discogs-auth-modal a:hover {
     text-decoration: underline;
 }
 
-/* Settings section */
-.settings-section {
+/* Auth Form */
+.auth-form {
     margin-bottom: 1.5rem;
 }
 
-.input-group {
-    margin-bottom: 1rem;
+.form-group {
+    margin-bottom: 1.5rem;
 }
 
-.input-group label {
+.form-group label {
     display: block;
     margin-bottom: 0.5rem;
     font-weight: 500;
 }
 
-.input-group input[type="text"] {
+.form-group input {
     width: 100%;
     padding: 0.75rem;
     border: 1px solid var(--divider-color);
@@ -547,39 +557,32 @@ body {
     font-size: 16px;
 }
 
-.toggle-group {
-    margin-top: 1.5rem;
-    padding-top: 1rem;
-    border-top: 1px solid var(--divider-color);
-}
-
-.toggle-group label {
-    display: flex;
-    align-items: center;
-    font-weight: 500;
-    cursor: pointer;
-}
-
-.toggle-group input[type="checkbox"] {
-    margin-right: 0.5rem;
-    width: 18px;
-    height: 18px;
-}
-
 .help-text {
     margin-top: 0.5rem;
     font-size: 0.875rem;
     color: var(--on-surface);
     opacity: 0.7;
-    padding-left: 1.5rem;
+}
+
+.auth-status {
+    margin: 1rem 0;
+    padding: 0.75rem;
+    border-radius: 4px;
+    background-color: rgba(255, 255, 255, 0.05);
+    font-size: 0.875rem;
+}
+
+.success-text {
+    color: var(--success-color);
 }
 
 .button-group {
     display: flex;
     justify-content: flex-end;
+    margin-top: 1.5rem;
 }
 
-#api-credentials-modal button {
+#discogs-auth-modal button {
     padding: 0.75rem 1.5rem;
     border: none;
     border-radius: 4px;
@@ -589,19 +592,14 @@ body {
     font-size: 16px;
 }
 
-#api-credentials-modal .save-credentials {
-    background-color: var(--primary-color);
-    color: var(--on-primary);
-}
-
-#api-credentials-modal .close-dialog {
+#discogs-auth-modal .close-dialog {
     background-color: transparent;
     color: var(--on-surface);
 }
 
 /* Mobile optimizations for modal */
 @media (max-width: 600px) {
-    #api-credentials-modal {
+    #discogs-auth-modal {
         width: 100%;
         max-width: none;
         border-radius: 0;
@@ -618,7 +616,7 @@ body {
         z-index: 1000;
     }
     
-    .settings-section {
+    .auth-form {
         flex: 1;
         overflow-y: auto;
         max-height: 60vh;
@@ -631,7 +629,7 @@ body {
         justify-content: space-between;
     }
     
-    #api-credentials-modal button {
+    #discogs-auth-modal button {
         flex: 1;
         text-align: center;
         margin: 0 0.25rem;
@@ -639,7 +637,7 @@ body {
         padding: 1rem;
     }
     
-    #api-credentials-modal .close-dialog {
+    #discogs-auth-modal .close-dialog {
         background-color: rgba(255, 255, 255, 0.1);
         color: var(--on-surface);
         font-weight: bold;

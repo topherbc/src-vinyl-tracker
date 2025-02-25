@@ -9,42 +9,18 @@ const DiscogsAPI = (() => {
     const USER_AGENT = 'SRCVinylTracker/1.0';
     
     // API credentials
-    let API_KEY = '';
-    let API_SECRET = '';
-    let USERNAME = '';
+    let apiKey = null;
+    let username = null;
     
     /**
-     * Set the API credentials
+     * Set the API key and username
      * @param {String} key - Discogs API key
-     * @param {String} secret - Discogs API secret
-     * @param {String} username - Discogs username
+     * @param {String} user - Discogs username
      */
-    const setCredentials = (key, secret, username) => {
-        API_KEY = key;
-        API_SECRET = secret;
-        USERNAME = username;
-    };
-    
-    /**
-     * Initialize credentials from config or localStorage
-     */
-    const initCredentials = () => {
-        if (typeof Config !== 'undefined' && Config.USE_HARDCODED_CREDENTIALS) {
-            // Use hardcoded credentials from config.js
-            setCredentials(
-                Config.DISCOGS_API_KEY,
-                Config.DISCOGS_API_SECRET,
-                Config.DISCOGS_USERNAME
-            );
-            console.log('Using hardcoded credentials from config.js');
-        } else {
-            // Use credentials from localStorage
-            const apiKey = localStorage.getItem('srcVinylTracker_apiKey') || '';
-            const apiSecret = localStorage.getItem('srcVinylTracker_apiSecret') || '';
-            const username = localStorage.getItem('srcVinylTracker_username') || '';
-            setCredentials(apiKey, apiSecret, username);
-            console.log('Using credentials from localStorage');
-        }
+    const setApiKey = (key, user) => {
+        apiKey = key;
+        username = user;
+        console.log(`Discogs API credentials set: API Key ${key ? 'provided' : 'missing'}, Username: ${user || 'not provided'}`);
     };
     
     /**
@@ -52,7 +28,7 @@ const DiscogsAPI = (() => {
      * @returns {Boolean} - True if credentials are set
      */
     const hasCredentials = () => {
-        return !!(API_KEY && API_SECRET);
+        return !!apiKey;
     };
     
     /**
@@ -60,11 +36,11 @@ const DiscogsAPI = (() => {
      * @returns {Boolean} - True if username is set
      */
     const hasUsername = () => {
-        return !!USERNAME;
+        return !!username;
     };
     
     /**
-     * Build the authorization header for Discogs API requests
+     * Build the headers for Discogs API requests
      * @returns {Object} - Headers object for fetch
      */
     const getHeaders = () => {
@@ -72,8 +48,8 @@ const DiscogsAPI = (() => {
             'User-Agent': USER_AGENT
         };
         
-        if (API_KEY && API_SECRET) {
-            headers['Authorization'] = `Discogs key=${API_KEY}, secret=${API_SECRET}`;
+        if (apiKey) {
+            headers['Authorization'] = `Discogs token=${apiKey}`;
         }
         
         return headers;
@@ -141,7 +117,7 @@ const DiscogsAPI = (() => {
     const searchAlbums = async (query) => {
         try {
             // If username is set, search in user's collection
-            if (USERNAME) {
+            if (username) {
                 return await searchUserCollection(query);
             }
             
@@ -187,7 +163,7 @@ const DiscogsAPI = (() => {
      * @returns {Promise} - Promise resolving to user's collection
      */
     const getUserCollection = async () => {
-        if (!USERNAME) {
+        if (!username) {
             throw new Error('Discogs username not set');
         }
         
@@ -198,7 +174,7 @@ const DiscogsAPI = (() => {
             
             // Fetch all pages of the collection
             while (hasMorePages) {
-                const url = new URL(`${API_BASE_URL}/users/${USERNAME}/collection/folders/0/releases`);
+                const url = new URL(`${API_BASE_URL}/users/${username}/collection/folders/0/releases`);
                 url.searchParams.append('page', page);
                 url.searchParams.append('per_page', 100); // Maximum allowed by Discogs API
                 
@@ -332,13 +308,15 @@ const DiscogsAPI = (() => {
         };
     };
     
-    // Initialize credentials on load
-    initCredentials();
+    // Initialize credentials from DiscogsAuth if available
+    if (typeof DiscogsAuth !== 'undefined' && DiscogsAuth.isAuthenticated()) {
+        apiKey = DiscogsAuth.getApiKey();
+        username = DiscogsAuth.getUsername();
+    }
     
     // Public API
     return {
-        setCredentials,
-        initCredentials,
+        setApiKey,
         hasCredentials,
         hasUsername,
         searchAlbums,

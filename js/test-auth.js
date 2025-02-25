@@ -1,6 +1,6 @@
 /**
- * Test script for Discogs OAuth functionality
- * This script can be included in the test-oauth.html file to test the OAuth functionality
+ * Test script for Discogs API Authentication functionality
+ * This script can be included in the test-auth.html file to test the API authentication functionality
  */
 
 // Create a test UI module if the main UI module is not available
@@ -39,37 +39,37 @@ if (typeof Auth === 'undefined') {
     };
 }
 
-// Test function to directly call the DiscogsOAuth.login method
-function testOAuthLogin() {
-    console.log('Testing OAuth login...');
+// Test function to directly call the DiscogsAuth.setCredentials method
+function testAuthLogin() {
+    console.log('Testing Discogs Auth...');
     
-    if (typeof DiscogsOAuth === 'undefined') {
-        console.error('DiscogsOAuth module is not defined');
+    if (typeof DiscogsAuth === 'undefined') {
+        console.error('DiscogsAuth module is not defined');
         return false;
     }
     
     try {
-        console.log('Calling DiscogsOAuth.login()');
-        DiscogsOAuth.login();
+        console.log('Calling DiscogsAuth.setCredentials()');
+        DiscogsAuth.setCredentials('test_token', 'test_username');
         return true;
     } catch (error) {
-        console.error('Error calling DiscogsOAuth.login():', error);
+        console.error('Error calling DiscogsAuth.setCredentials():', error);
         return false;
     }
 }
 
 // Test function to check authentication status
-function testOAuthStatus() {
-    console.log('Testing OAuth status...');
+function testAuthStatus() {
+    console.log('Testing Auth status...');
     
-    if (typeof DiscogsOAuth === 'undefined') {
-        console.error('DiscogsOAuth module is not defined');
-        return { success: false, error: 'DiscogsOAuth module is not defined' };
+    if (typeof DiscogsAuth === 'undefined') {
+        console.error('DiscogsAuth module is not defined');
+        return { success: false, error: 'DiscogsAuth module is not defined' };
     }
     
     try {
-        const isAuthenticated = DiscogsOAuth.isAuthenticated();
-        const username = DiscogsOAuth.getUsername ? DiscogsOAuth.getUsername() : 'N/A';
+        const isAuthenticated = DiscogsAuth.isAuthenticated();
+        const username = DiscogsAuth.getUsername ? DiscogsAuth.getUsername() : 'N/A';
         
         console.log('Authentication status:', isAuthenticated);
         console.log('Username:', username);
@@ -80,7 +80,7 @@ function testOAuthStatus() {
             username
         };
     } catch (error) {
-        console.error('Error checking OAuth status:', error);
+        console.error('Error checking Auth status:', error);
         return { success: false, error: error.message };
     }
 }
@@ -89,37 +89,37 @@ function testOAuthStatus() {
 function testUpdateUI() {
     console.log('Testing updateAuthUI...');
     
-    if (typeof DiscogsOAuth === 'undefined') {
-        console.error('DiscogsOAuth module is not defined');
+    if (typeof DiscogsAuth === 'undefined') {
+        console.error('DiscogsAuth module is not defined');
         return false;
     }
     
     try {
-        console.log('Calling DiscogsOAuth.updateAuthUI()');
-        DiscogsOAuth.updateAuthUI();
+        console.log('Calling DiscogsAuth.updateAuthUI()');
+        DiscogsAuth.updateAuthUI();
         return true;
     } catch (error) {
-        console.error('Error calling DiscogsOAuth.updateAuthUI():', error);
+        console.error('Error calling DiscogsAuth.updateAuthUI():', error);
         return false;
     }
 }
 
 // Initialize the test when the DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Test OAuth script loaded');
+    console.log('Test Auth script loaded');
     console.log('Config loaded:', typeof Config !== 'undefined');
-    console.log('DiscogsOAuth loaded:', typeof DiscogsOAuth !== 'undefined');
+    console.log('DiscogsAuth loaded:', typeof DiscogsAuth !== 'undefined');
     console.log('UI loaded:', typeof UI !== 'undefined');
     
     // Add test buttons if they exist
     const loginButton = document.getElementById('test-login-button');
     if (loginButton) {
-        loginButton.addEventListener('click', testOAuthLogin);
+        loginButton.addEventListener('click', testAuthLogin);
     }
     
     const statusButton = document.getElementById('test-status-button');
     if (statusButton) {
-        statusButton.addEventListener('click', testOAuthStatus);
+        statusButton.addEventListener('click', testAuthStatus);
     }
     
     const updateUIButton = document.getElementById('test-update-ui-button');

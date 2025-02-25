@@ -9,60 +9,63 @@ A web application for tracking vinyl records played on a cartridge, developed by
 - Search for albums using the Discogs API
 - Track total plays on your cartridge
 - Modern dark theme with responsive design
-- Cross-device credential storage option
-- Improved collection search with pagination
-- Data persistence using localStorage
-- GitHub authentication for cross-device synchronization
-- Secure storage of play history and settings in GitHub Gists
+- Cross-device synchronization with GitHub authentication
+- Search your personal Discogs collection
+- Data persistence using GitHub Gists
+- Secure OAuth authentication with GitHub and API token authentication with Discogs
+
+## How It Works
+
+### Cross-Device Synchronization
+
+SRC Vinyl Tracker uses GitHub authentication and GitHub Gists to provide seamless cross-device synchronization:
+
+1. When you log in with GitHub, the app creates a private Gist in your GitHub account
+2. Your play history and settings are stored in this Gist
+3. When you use the app on another device, it retrieves your data from the Gist
+4. Changes are automatically synced between devices
+
+### Discogs Integration
+
+The app integrates with Discogs to provide access to your vinyl collection:
+
+1. Enter your Discogs API token and username
+2. Search your personal Discogs collection
+3. Add albums from your collection to your play history
+4. Your Discogs credentials are securely stored in your GitHub Gist for cross-device access
 
 ## Setup
 
 1. Clone this repository
 2. Open `index.html` in your browser
-3. Click the settings icon in the top-right corner to add your Discogs API credentials
-
-## Discogs Authentication
-
-The application uses OAuth to authenticate with Discogs, providing a secure and user-friendly experience:
-
-### Setting Up Discogs OAuth
-
-1. Create an account at [Discogs](https://www.discogs.com/) if you don't have one
-2. Go to [Discogs Developer Settings](https://www.discogs.com/settings/developers)
-3. Click "Create an Application"
-4. Fill in the required information:
-   - Application name: SRC Vinyl Tracker
-   - Description: A web application for tracking vinyl records played on a cartridge
-   - Website URL: (Your GitHub Pages URL or leave blank)
-   - Callback URL: (Same as your application URL)
-5. After creating the application, you'll receive a Consumer Key
-6. Add this key to the `config.js` file:
-   ```javascript
-   const DISCOGS_CONSUMER_KEY = 'your_consumer_key';
-   ```
-
-### Authenticating in the App
-
-1. Open the application in your browser
-2. Click the settings icon in the top-right corner
-3. Click "Log in with Discogs"
-4. You'll be redirected to Discogs to authorize the application
-5. After authorization, you'll be redirected back to the application
-
-### Cross-Device Syncing
-
-When using GitHub authentication (see below), your Discogs authentication will be synced across all your devices automatically using GitHub Gists. This means you only need to log in once, and your authentication will be available on all your devices.
+3. Click the "Login with GitHub" button to enable cross-device synchronization
+4. Click the settings icon and connect with Discogs to access your collection
 
 ## GitHub Authentication
 
-For a seamless cross-device experience, you can log in with your GitHub account:
+To enable cross-device synchronization:
 
 1. Click the "Login with GitHub" button in the header
 2. Authorize the application to access your GitHub account
 3. Your play history and settings will be securely stored in a private GitHub Gist
 4. Data will automatically sync between devices when you're logged in
 
-**Note**: To enable GitHub authentication, you need to create a GitHub OAuth application and add your client ID to the auth.js file.
+## Discogs Authentication
+
+To access your Discogs collection:
+
+1. Click the settings icon in the top-right corner
+2. Enter your Discogs API token and username
+3. Click "Connect to Discogs"
+
+### Getting a Discogs API Token
+
+1. Log in to your Discogs account
+2. Go to [Discogs Developer Settings](https://www.discogs.com/settings/developers)
+3. Generate a personal access token
+4. Copy the token and paste it into the Discogs API Token field in the app
+
+Your Discogs credentials will be securely stored in your GitHub Gist for cross-device access, so you only need to enter them once.
 
 ## GitHub Pages Deployment
 
@@ -80,7 +83,7 @@ To deploy this application to GitHub Pages:
 
 ### Adding a Play
 
-1. Use the search box to find an album on Discogs
+1. Use the search box to find an album in your Discogs collection
 2. Click on the album from the search results
 3. Select the date you listened to the album
 4. Click "Add Play"
@@ -93,32 +96,22 @@ The play history is displayed at the bottom of the application in chronological 
 
 The total number of plays is displayed in the header of the application.
 
-## Collection Search
-
-If you provide your Discogs username in the settings, the application will search your personal collection instead of the entire Discogs database. This feature:
-
-- Fetches your entire collection with pagination support
-- Uses a score-based matching system for better search results
-- Matches partial words and phrases
-- Works well with large collections
-
-## Mobile Optimizations
-
-The application is fully responsive and optimized for mobile devices:
-
-- Search box is positioned at the top for easy access
-- Settings modal is optimized for small screens
-- Touch-friendly UI elements
-- Smooth scrolling between sections
-
 ## Technologies Used
 
 - HTML5
 - CSS3
 - JavaScript (ES6+)
-- Discogs API
-- GitHub API for authentication and Gist storage
-- localStorage for data persistence
+- Discogs API with personal access token authentication
+- GitHub API with OAuth 2.0 authentication and PKCE
+- GitHub Gists for cross-device data storage
+
+## Security Features
+
+- OAuth 2.0 with PKCE for GitHub authentication
+- API token authentication for Discogs
+- Encrypted token storage in localStorage
+- Private GitHub Gists for data storage
+- CORS-friendly API requests
 
 ## License
 

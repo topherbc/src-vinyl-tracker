@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Discogs OAuth Test</title>
+    <title>Discogs API Authentication Test</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -53,11 +53,11 @@
     </style>
 </head>
 <body>
-    <h1>Discogs OAuth Test</h1>
-    <p>This page tests the Discogs OAuth functionality.</p>
+    <h1>Discogs API Authentication Test</h1>
+    <p>This page tests the Discogs API authentication functionality.</p>
     
-    <button id="login-button" onclick="return handleDiscogsOAuthLogin();">Log in with Discogs</button>
-    <button id="check-auth-button" onclick="checkDiscogsOAuthStatus(); return false;">Check Authentication Status</button>
+    <button id="login-button" onclick="return testAuthLogin();">Set Discogs Credentials</button>
+    <button id="check-auth-button" onclick="testAuthStatus(); return false;">Check Authentication Status</button>
     <button id="show-toast-button">Test Toast Message</button>
     
     <h2>Additional Tests</h2>
@@ -73,9 +73,9 @@
     <script src="js/config.js"></script>
     <script src="js/ui.js"></script>
     <script src="js/auth.js"></script>
-    <script src="js/discogs-oauth.js"></script>
+    <script src="js/discogs-auth.js"></script>
     <script src="js/global-helpers.js"></script>
-    <script src="js/test-oauth.js"></script>
+    <script src="js/test-auth.js"></script>
     
     <script>
         // Simple UI module for testing
@@ -114,7 +114,7 @@
             // Log initial state
             resultDiv.innerHTML = `
                 <p>Config loaded: ${typeof Config !== 'undefined'}</p>
-                <p>DiscogsOAuth loaded: ${typeof DiscogsOAuth !== 'undefined'}</p>
+                <p>DiscogsAuth loaded: ${typeof DiscogsAuth !== 'undefined'}</p>
                 <p>UI loaded: ${typeof UI !== 'undefined'}</p>
                 <p>CONSUMER_KEY: ${typeof Config !== 'undefined' ? Config.DISCOGS_CONSUMER_KEY : 'undefined'}</p>
             `;
@@ -124,11 +124,11 @@
                 resultDiv.innerHTML += '<p>Login button clicked</p>';
                 
                 try {
-                    if (typeof DiscogsOAuth !== 'undefined') {
-                        resultDiv.innerHTML += '<p>Calling DiscogsOAuth.login()</p>';
-                        DiscogsOAuth.login();
+                    if (typeof DiscogsAuth !== 'undefined') {
+                        resultDiv.innerHTML += '<p>Calling DiscogsAuth.setCredentials()</p>';
+                        DiscogsAuth.setCredentials('test_token', 'test_username');
                     } else {
-                        resultDiv.innerHTML += '<p>Error: DiscogsOAuth is not defined</p>';
+                        resultDiv.innerHTML += '<p>Error: DiscogsAuth is not defined</p>';
                     }
                 } catch (error) {
                     resultDiv.innerHTML += `<p>Error: ${error.message}</p>`;
@@ -138,9 +138,9 @@
             
             checkAuthButton.addEventListener('click', function() {
                 try {
-                    if (typeof DiscogsOAuth !== 'undefined') {
-                        const isAuthenticated = DiscogsOAuth.isAuthenticated();
-                        const username = DiscogsOAuth.getUsername ? DiscogsOAuth.getUsername() : 'N/A';
+                    if (typeof DiscogsAuth !== 'undefined') {
+                        const isAuthenticated = DiscogsAuth.isAuthenticated();
+                        const username = DiscogsAuth.getUsername ? DiscogsAuth.getUsername() : 'N/A';
                         
                         resultDiv.innerHTML += `
                             <p>Authentication status: ${isAuthenticated ? 'Authenticated' : 'Not authenticated'}</p>
@@ -151,7 +151,7 @@
                             resultDiv.classList.add('success');
                         }
                     } else {
-                        resultDiv.innerHTML += '<p>Error: DiscogsOAuth is not defined</p>';
+                        resultDiv.innerHTML += '<p>Error: DiscogsAuth is not defined</p>';
                     }
                 } catch (error) {
                     resultDiv.innerHTML += `<p>Error: ${error.message}</p>`;
