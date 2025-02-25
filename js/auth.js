@@ -131,12 +131,11 @@ const Auth = (() => {
         try {
             UI.showToast('Starting GitHub authentication...');
             
-            // Start the device flow
-            const deviceCodeUrl = 'https://github.com/login/device/code';
+            // Start the device flow using a CORS proxy
+            const deviceCodeUrl = 'https://api.allorigins.win/post?url=' + encodeURIComponent('https://github.com/login/device/code');
             const deviceCodeResponse = await fetch(deviceCodeUrl, {
                 method: 'POST',
                 headers: {
-                    'Accept': 'application/json',
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
@@ -149,7 +148,15 @@ const Auth = (() => {
                 throw new Error(`Device code request failed: ${deviceCodeResponse.status}`);
             }
             
-            const deviceData = await deviceCodeResponse.json();
+            const proxyResponse = await deviceCodeResponse.json();
+            
+            // The actual GitHub response is in the contents property, and it's a string
+            // that needs to be parsed as JSON
+            if (!proxyResponse.contents) {
+                throw new Error('Invalid response from CORS proxy');
+            }
+            
+            const deviceData = JSON.parse(proxyResponse.contents);
             const deviceCode = deviceData.device_code;
             const userCode = deviceData.user_code;
             const verificationUri = deviceData.verification_uri;
@@ -209,10 +216,11 @@ const Auth = (() => {
                 await new Promise(resolve => setTimeout(resolve, interval * 1000));
                 
                 try {
-                    const tokenResponse = await fetch('https://github.com/login/oauth/access_token', {
+                    // Use the CORS proxy for token request as well
+                    const tokenUrl = 'https://api.allorigins.win/post?url=' + encodeURIComponent('https://github.com/login/oauth/access_token');
+                    const tokenResponse = await fetch(tokenUrl, {
                         method: 'POST',
                         headers: {
-                            'Accept': 'application/json',
                             'Content-Type': 'application/json'
                         },
                         body: JSON.stringify({
@@ -222,7 +230,32 @@ const Auth = (() => {
                         })
                     });
                     
-                    const tokenData = await tokenResponse.json();
+                    if (!tokenResponse.ok) {
+                        throw new Error(`Token request failed: ${tokenResponse.status}`);
+                    }
+                    
+                    const proxyTokenResponse = await tokenResponse.json();
+                    
+                    // Parse the token response from the proxy
+                    if (!proxyTokenResponse.contents) {
+                        throw new Error('Invalid response from CORS proxy');
+                    }
+                    
+                    // The response might be JSON or form-encoded, try to parse as JSON first
+                    let tokenData;
+                    try {
+                        tokenData = JSON.parse(proxyTokenResponse.contents);
+                    } catch (e) {
+                        // If it's not JSON, it might be form-encoded
+                        const params = new URLSearchParams(proxyTokenResponse.contents);
+                        tokenData = {
+                            access_token: params.get('access_token'),
+                            token_type: params.get('token_type'),
+                            scope: params.get('scope'),
+                            error: params.get('error'),
+                            error_description: params.get('error_description')
+                        };
+                    }
                     
                     if (tokenData.access_token) {
                         accessToken = tokenData.access_token;
