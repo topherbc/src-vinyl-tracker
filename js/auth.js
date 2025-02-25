@@ -90,29 +90,6 @@ const Auth = (() => {
      * Check if user is already logged in
      */
     const init = () => {
-        // Check for GitHub auth callback
-        const urlParams = new URLSearchParams(window.location.search);
-        const code = urlParams.get('code');
-        const state = urlParams.get('state');
-        
-        if (code && state) {
-            // Verify state to prevent CSRF attacks
-            const storedState = localStorage.getItem(OAUTH_STATE_KEY);
-            
-            if (state !== storedState) {
-                console.error('OAuth state mismatch');
-                UI.showToast('Authentication failed: Invalid state parameter');
-                return;
-            }
-            
-            // Remove code and state from URL to prevent sharing
-            const newUrl = window.location.pathname + window.location.hash;
-            window.history.replaceState({}, document.title, newUrl);
-            
-            // Exchange code for token
-            exchangeCodeForToken(code);
-            return;
-        }
         
         // Check if already authenticated
         const encryptedToken = localStorage.getItem(TOKEN_KEY);
@@ -143,7 +120,7 @@ const Auth = (() => {
     };
     
     /**
-     * Start GitHub OAuth flow with PKCE
+     * Start GitHub device flow authentication
      */
     const login = async () => {
         if (!GITHUB_CLIENT_ID) {
@@ -152,84 +129,147 @@ const Auth = (() => {
         }
         
         try {
-            // Generate PKCE code verifier and challenge
-            const codeVerifier = generateRandomString(64);
-            const codeChallenge = await generateCodeChallenge(codeVerifier);
+            UI.showToast('Starting GitHub authentication...');
             
-            // Store code verifier for later use
-            localStorage.setItem(PKCE_VERIFIER_KEY, codeVerifier);
-            
-            // Generate random state for security
-            const state = generateRandomString(32);
-            localStorage.setItem(OAUTH_STATE_KEY, state);
-            
-            // Redirect to GitHub OAuth with PKCE
-            const authUrl = new URL('https://github.com/login/oauth/authorize');
-            authUrl.searchParams.append('client_id', GITHUB_CLIENT_ID);
-            authUrl.searchParams.append('redirect_uri', GITHUB_REDIRECT_URI);
-            authUrl.searchParams.append('scope', GITHUB_SCOPE);
-            authUrl.searchParams.append('state', state);
-            authUrl.searchParams.append('code_challenge', codeChallenge);
-            authUrl.searchParams.append('code_challenge_method', 'S256');
-            
-            window.location.href = authUrl.toString();
-        } catch (error) {
-            console.error('Error starting OAuth flow:', error);
-            UI.showToast('Error starting authentication: ' + error.message);
-        }
-    };
-    
-    /**
-     * Exchange OAuth code for token using CORS proxy
-     * @param {String} code - OAuth code from GitHub
-     */
-    const exchangeCodeForToken = async (code) => {
-        try {
-            // Get the code verifier from localStorage
-            const codeVerifier = localStorage.getItem(PKCE_VERIFIER_KEY);
-            if (!codeVerifier) {
-                throw new Error('Code verifier not found');
-            }
-            
-            // Clear the code verifier from localStorage
-            localStorage.removeItem(PKCE_VERIFIER_KEY);
-            localStorage.removeItem(OAUTH_STATE_KEY);
-            
-            // Use a CORS proxy to exchange the code for a token
-            // For GitHub Pages deployment, we'll use a public CORS proxy service
-            // In a production app, you would use your own server or a more secure proxy
-            const tokenUrl = 'https://cors-anywhere.herokuapp.com/https://github.com/login/oauth/access_token';
-            
-            const response = await fetch(tokenUrl, {
+            // Start the device flow
+            const deviceCodeUrl = 'https://github.com/login/device/code';
+            const deviceCodeResponse = await fetch(deviceCodeUrl, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
                     client_id: GITHUB_CLIENT_ID,
-                    code: code,
-                    redirect_uri: GITHUB_REDIRECT_URI,
-                    code_verifier: codeVerifier
+                    scope: GITHUB_SCOPE
                 })
             });
             
-            if (!response.ok) {
-                throw new Error(`Token exchange failed: ${response.status} ${response.statusText}`);
+            if (!deviceCodeResponse.ok) {
+                throw new Error(`Device code request failed: ${deviceCodeResponse.status}`);
             }
             
-            const data = await response.json();
+            const deviceData = await deviceCodeResponse.json();
+            const deviceCode = deviceData.device_code;
+            const userCode = deviceData.user_code;
+            const verificationUri = deviceData.verification_uri;
+            const interval = deviceData.interval || 5;
             
-            if (data.error) {
-                throw new Error(`Token exchange error: ${data.error_description || data.error}`);
+            // Show the user code and verification URI
+            const authModal = document.createElement('dialog');
+            authModal.innerHTML = `
+                <div style="padding: 20px; max-width: 500px;">
+                    <h3>Complete GitHub Authentication</h3>
+                    <p>Please copy this code and paste it at the GitHub verification page:</p>
+                    <div style="font-size: 24px; font-weight: bold; margin: 15px 0; text-align: center; letter-spacing: 2px;">
+                        ${userCode}
+                    </div>
+                    <p>Then click the button below to open GitHub:</p>
+                    <div style="display: flex; justify-content: center; margin: 15px 0;">
+                        <button id="open-github-btn" style="padding: 10px 15px; background: #2ea44f; color: white; border: none; border-radius: 6px; cursor: pointer;">
+                            Open GitHub Verification
+                        </button>
+                    </div>
+                    <p style="font-size: 14px; color: #666;">
+                        After completing verification on GitHub, this window will automatically close.
+                    </p>
+                </div>
+            `;
+            document.body.appendChild(authModal);
+            
+            // Use the showModal method if available, otherwise use a polyfill
+            if (typeof authModal.showModal === 'function') {
+                authModal.showModal();
+            } else {
+                authModal.style.display = 'block';
+                authModal.style.position = 'fixed';
+                authModal.style.top = '50%';
+                authModal.style.left = '50%';
+                authModal.style.transform = 'translate(-50%, -50%)';
+                authModal.style.zIndex = '1000';
+                authModal.style.background = 'white';
+                authModal.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)';
+                authModal.style.borderRadius = '8px';
             }
             
-            if (!data.access_token) {
-                throw new Error('No access token received');
+            // Add event listener to the button
+            const openGitHubBtn = document.getElementById('open-github-btn');
+            if (openGitHubBtn) {
+                openGitHubBtn.addEventListener('click', () => {
+                    window.open(verificationUri, '_blank');
+                });
+            }
+            
+            // Poll for the access token
+            let accessToken = null;
+            const maxAttempts = 30; // 30 attempts * 5 seconds = 2.5 minutes max
+            let attempts = 0;
+            
+            while (!accessToken && attempts < maxAttempts) {
+                await new Promise(resolve => setTimeout(resolve, interval * 1000));
+                
+                try {
+                    const tokenResponse = await fetch('https://github.com/login/oauth/access_token', {
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            client_id: GITHUB_CLIENT_ID,
+                            device_code: deviceCode,
+                            grant_type: 'urn:ietf:params:oauth:grant-type:device_code'
+                        })
+                    });
+                    
+                    const tokenData = await tokenResponse.json();
+                    
+                    if (tokenData.access_token) {
+                        accessToken = tokenData.access_token;
+                        // Close the modal
+                        if (typeof authModal.close === 'function') {
+                            authModal.close();
+                        } else {
+                            authModal.style.display = 'none';
+                            if (authModal.parentNode) {
+                                authModal.parentNode.removeChild(authModal);
+                            }
+                        }
+                        break;
+                    } else if (tokenData.error === 'authorization_pending') {
+                        // Still waiting for user to authorize
+                        console.log('Waiting for user authorization...');
+                    } else if (tokenData.error === 'slow_down') {
+                        // GitHub is asking us to slow down our polling
+                        console.log('Slowing down polling...');
+                        await new Promise(resolve => setTimeout(resolve, 5000)); // Wait an extra 5 seconds
+                    } else if (tokenData.error) {
+                        throw new Error(`Token error: ${tokenData.error_description || tokenData.error}`);
+                    }
+                } catch (error) {
+                    console.error('Error polling for token:', error);
+                    // Continue polling despite errors
+                }
+                
+                attempts++;
+            }
+            
+            // If we didn't get an access token after all attempts
+            if (!accessToken) {
+                // Close the modal if it's still open
+                if (typeof authModal.close === 'function') {
+                    authModal.close();
+                } else {
+                    authModal.style.display = 'none';
+                    if (authModal.parentNode) {
+                        authModal.parentNode.removeChild(authModal);
+                    }
+                }
+                throw new Error('Authentication timed out. Please try again.');
             }
             
             // Save token (encrypted)
-            githubToken = data.access_token;
+            githubToken = accessToken;
             localStorage.setItem(TOKEN_KEY, encryptData(githubToken));
             
             // Get user info
@@ -254,10 +294,12 @@ const Auth = (() => {
                 App.promptForDiscogsAuth();
             }
         } catch (error) {
-            console.error('Error exchanging code for token:', error);
+            console.error('Error during GitHub authentication:', error);
             UI.showToast('Authentication failed: ' + error.message);
         }
     };
+    
+    // The exchangeCodeForToken function has been removed as we now use the device flow directly in the login function
     
     /**
      * Fetch GitHub user info using the access token
